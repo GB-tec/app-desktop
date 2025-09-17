@@ -1,0 +1,44 @@
+- O segundo DARF era apenas para salvar o icone! pode deletar!
+NFSE- anual
+botão de editar as empresas no banco de dados está correto, apenas falta criar o modal e fazer a vinculação não estava dando certo apra abrir!
+-criar <option> com os os ultimo 5 anos que atualize automáticamente o ano atual e o utlimos 4 anos!
+-criar <option> para os meses do ano pois no mensal é apenas sobre o mês anterior então faz mais sentido criar essa estrutura apenas para o anual, pois é o foco para caso o usuário queira selecionar outros meses até elimina logica pois não precisa ter verificação de meses somente de ano, dá para por uma opçõa no "outro" que abre para o usuário informar o ano anterior a os ultimos 5 anos
+
+NFSE- mensal
+deve sempre realizar a cosulta a o mês anterior ao mês atual, ter uma verificação para troca de ano, ex: se o mês for janeiro/26 deve realizar a consulta com o mês 12/25 e assim sucessivamente por todos os anos.
+como depende da prefeitura adicionar o id/value, as vezes eles demoram, então precisa ter uma verificação quando tiver essa troca de ano para caso o id/value do novo ano ainda não for incluido então retornar para o usuário que a prefeitura ainda não adicionou o id no sisitema!
+
+
+baixa e extrai o xml, más precisa ainda ser verificado o processo para não demorar muito!
+
+TIRAR ESSA PARTE DE MANTER CESSÃO ATIVA NA PREFEITURA! É UM CASO JÁ QUE QUANDO VAI SER FEITO POR LOOP NÃO DÁ TEMPO DE FALHAR, E QUANDO É CONSULTA INDIVIDUAL JÁ PEGA CONSULTA E JÁ ERA FEHCAR E ENCERRA!
+
+CONFIG DASHBOAR, PRECISA COLOCAR A SELECÃO SERÁ SALVO A PASTA!
+TESTER SE OS OUTROS METODOS
+MUDAR A FORMA DO MÊS E ANO É "XX-XXX" NÃO "XX"/"XX"
+
+COLOCAR A CONSULTA DOS DEBITÓS NA PREFEITURA, PARA RETORNAR OS DÉBITOS QUE A EMPRESA TEM EM ABERTO!
+
+ESTÁ CADASTRANDO EMPRESAS CORRETAMENTE, E É POSSIVEL EDITAR O NOME DA EMPRESA, COLOCAR PARA DEFINIR MAIS EDIÇÕES COMO ATIVO OU INATIVA!
+COLOCAR OUTRO BOTÃO DE "DEL" PARA DELETAR EMPRESAS!
+
+ESTÁ SENDO BAIXADO OS ZIP CORRETOS, MÁS O PDF SÓ BAIXA A EMPRESA PRESTADOS!
+
+AGORA ESTÁ BAIXANDO CORRETAMENTE TODOS OS ARQUIVOS PREFEITURA E SEFAZ, FALTA FAZER A PARTE DA PREFEITURA SEM MOVIMENTOALÉM DISTO O NOME DAS PASTAS ESTÃO CORRETOS! MESMO PADRÃO PARA PREFEITURA E PARA SEFAZ!
+
+TALVEZ DE PARA VERIFICAR UMA FORMA MAIS RÁPIDA DE CONSULTAR OS AS NOTAS DE SAIDAS ESTÁ MUITO DEMORADO, LEVA CERCA DE 10S POR EMPRESA
+
+AMBAS AS EMPRESAS ESTÃO SENDO DIASPARADAS COM A AUTOMAÇÃO NO GOOGLE CROME;
+
+TABELA EMPRESAS GRID COM FILTROS FUNCIONANDO PERFEITAMENTE!
+
+A CONSULTA VIA IE E VIA CNPJ ESTÁ SENDO PASSADA CORERTAMENTE TANTO A ESTILO DE CONSULTA QUANTO O VALOR! MÁS TEM QUE VERIFICAR POIS NÃO ESTÁ SENDO 
+CAPTURADO O ID DEPOIS DE CLICAR INFORMAR, PECISA VER QUAL É O 
+"
+Valor identificado como: Inscri├º├úo Estadual
+­ƒÜÇ INICIANDO CONSULTA SAIDAS...
+ÔØî Erro na automa├º├úo SEFAZ_NF55: page.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#j_idt14\\:btnConsultar')"
+
+NO CASO É O ID DO BOTÃO DA CONSULTA, PRECISA VER POIS QUE NÃO ESTÁ ACHANDO ESTE ID! 

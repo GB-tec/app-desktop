@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FETHAB</title>
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #336699;
+      --ok: #4CAF50;
+      --bg: #e0f7fa;
+      --card: #fff;
+      --muted: #f8f9fa;
+      --border: #ccc;
+      --muted2: #f1f8e9;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: var(--bg)
+    }
+
+    .container {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, .1)
+    }
+
+    .header-table {
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      margin-bottom: 20px
+    }
+
+    .header-table td {
+      padding: 8px;
+      text-align: center
+    }
+
+    .input-mode {
+      text-align: center;
+      margin: 20px 0;
+      padding: 10px 0
+    }
+
+    .input-mode label {
+      margin: 0 12px;
+      cursor: pointer
+    }
+
+    .main-table {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    .main-table td {
+      padding: 6px;
+      vertical-align: middle
+    }
+
+    .main-table td:first-child {
+      text-align: right;
+      width: 230px;
+      padding-right: 10px;
+      font-weight: 700
+    }
+
+    input[type="text"],
+    select,
+    textarea,
+    input[type="date"] {
+      width: 90%;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px
+    }
+
+    input[readonly] {
+      background: #f0f0f0;
+      cursor: not-allowed
+    }
+
+    .metros-cubicos-input {
+      text-align: right;
+      font-family: monospace
+    }
+
+    .action-buttons {
+      text-align: center;
+      margin-top: 18px
+    }
+
+    .btn-main {
+      padding: 10px 20px;
+      background: var(--ok);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px
+    }
+
+    .btn-sec {
+      padding: 10px 20px;
+      background: #999;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px
+    }
+
+    .hidden {
+      display: none
+    }
+
+    .drop-zone {
+      width: 100%;
+      height: 190px;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: var(--muted);
+      text-align: center;
+      padding: 10px
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--ok);
+      background: var(--muted2)
+    }
+
+    .small {
+      font-size: .9rem;
+      color: #555
+    }
+    .date-input {
+  width: 50%;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-align: center;
+  font-family: monospace;
+  letter-spacing: 1px;
+  background-color: #fff;
+  color: #333;
+}
+
+/* Ícone do calendário */
+.date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  background: url("data:image/svg+xml;utf8,<svg fill='black' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M7 10h5v5H7z' opacity='.3'/><path d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.89-1.99 2L3 20c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 16H5V9h14v11z'/></svg>") no-repeat center;
+  opacity: 0.6;
+  width: 20px;
+  height: 20px;
+}
+.date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <table class="header-table">
+      <tr>
+        <td colspan="2">Sistema de Arrecadação</td>
+      </tr>
+      <tr>
+        <td colspan="2">Pessoa Jurídica Inscrita</td>
+      </tr>
+    </table>
+
+    <div class="input-mode">
+      <input type="radio" id="manual-input" name="input-mode" value="manual" checked onchange="toggleMode(this)">
+      <label for="manual-input">Informar Manual</label>
+
+      <input type="radio" id="xml-input" name="input-mode" value="xml" onchange="toggleMode(this)">
+      <label for="xml-input">Inserir XML</label>
+
+      <input type="radio" id="pdf-input" name="input-mode" value="pdf" onchange="toggleMode(this)">
+      <label for="pdf-input">Inserir PDF</label>
+    </div>
+
+    <!-- MANUAL -->
+    <div id="manual-section">
+      <table class="main-table">
+        <tr>
+          <td>Período de referência:</td>
+          <td><input type="text" id="periodo-referencia" placeholder="MM/AAAA"></td>
+        </tr>
+        <tr>
+          <td>Nome da Empresa:</td>
+          <td><input type="text" id="empresa"></td>
+        </tr>
+        <tr>
+          <td>Número da Nota:</td>
+          <td>
+            <input type="text" id="numero-nota" placeholder="000.000.000" />
+           </td>
+        </tr>
+        <tr>
+          <td>Quantidade de Metros Cúbicos:</td>
+          <td>
+            <input type="text" id="metros-cubicos" class="metros-cubicos-input" maxlength="6" placeholder="00,000"
+              oninput="formatarMetrosCubicos(this)" onchange="calcularTributo()">
+          </td>
+        </tr>
+        <tr>
+          <td>Data de vencimento:</td>
+          <td><input type="date" id="data-vencimento" class="date-input"></td>
+        </tr>
+
+        <tr>
+          <td>Valor Tributo:</td>
+          <td><input type="text" id="valor-tributo" readonly></td>
+        </tr>
+        <tr>
+          <td>Informações Previstas em Instruções:</td>
+          <td><textarea class="info-box" id="info-box"></textarea></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- XML -->
+    <div id="xml-section" class="hidden">
+      <div class="drop-zone" id="drop-zone-xml">
+        Arraste e solte o XML aqui<br>
+        <span class="small">Ou clique para selecionar</span>
+      </div>
+      <input type="file" id="file-input-xml" accept=".xml" style="display:none">
+    </div>
+
+    <!-- PDF -->
+    <div id="pdf-section" class="hidden">
+      <div class="drop-zone" id="drop-zone-pdf">
+        Arraste e solte o PDF da NF-e (DANFE) aqui<br>
+        <span class="small">Ou clique para selecionar</span>
+      </div>
+      <input type="file" id="file-input-pdf" accept=".pdf" style="display:none">
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn-main" onclick="emitirGuia()">Emitir</button>
+      <button class="btn-sec" onclick="voltarPagina()">Retornar</button>
+    </div>
+  </div>
+
+  <script>
+    const MULTIPLICADOR = 24.349;
+
+    function goManualReview() {
+      const manualRadio = document.getElementById('manual-input');
+      manualRadio.checked = true;
+      toggleMode(manualRadio);
+    }
+
+    function onlyDigits(str) { return (str || "").replace(/\D/g, ''); }
+    function formatNFWithDots9(nfDigits) {
+      const d = onlyDigits(nfDigits).padStart(9, '0').slice(-9);
+      return d.replace(/(\d{3})(\d{3})(\d{3})/, '$1.$2.$3');
+    }
+    function setInfoBox(nfRaw) {
+      const nfPlain = onlyDigits(nfRaw); // só dígitos
+      document.getElementById('info-box').value = `Guia ref. NF-e Nº ${nfPlain}`;
+    }
+
+    /* FORMATAÇÃO */
+    function formatarMetrosCubicos(input) {
+      let v = (input.value || '').replace(/\D/g, '');
+      while (v.length < 5) v = '0' + v;
+      v = v.slice(-5);
+      input.value = v.slice(0, 2) + ',' + v.slice(2);
+      calcularTributo();
+    }
+    function formatarMoeda(valor) {
+      return `R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    function validarMetrosCubicos() {
+      const v = parseFloat((document.getElementById('metros-cubicos').value || '').replace(',', '.'));
+      if (!v) { alert('Atenção: Metros Cúbicos não informado.'); return false; }
+      return true;
+    }
+    function calcularTributo() {
+      const v = parseFloat((document.getElementById('metros-cubicos').value || '').replace(',', '.'));
+      document.getElementById('valor-tributo').value = isNaN(v) ? '' : formatarMoeda(v * MULTIPLICADOR);
+    }
+
+    /* TOGGLE */
+    function toggleMode(radio) {
+      document.getElementById('manual-section').classList.add('hidden');
+      document.getElementById('xml-section').classList.add('hidden');
+      document.getElementById('pdf-section').classList.add('hidden');
+      if (radio.value === 'manual') document.getElementById('manual-section').classList.remove('hidden');
+      if (radio.value === 'xml') document.getElementById('xml-section').classList.remove('hidden');
+      if (radio.value === 'pdf') document.getElementById('pdf-section').classList.remove('hidden');
+    }
+
+    /* AÇÕES */
+    function emitirGuia() {
+      if (!validarMetrosCubicos()) return;
+      const empresa = document.getElementById('empresa').value;
+      const nf = document.getElementById('numero-nota').value;
+      const periodo = document.getElementById('periodo-referencia').value;
+      const mc = document.getElementById('metros-cubicos').value;
+      const valor = document.getElementById('valor-tributo').value;
+      const info = document.getElementById('info-box').value;
+      if (confirm(`Confirmar emissão?\n\nEmpresa: ${empresa}\nNF: ${nf}\nPeríodo: ${periodo}\nM³: ${mc}\nValor: ${valor}\nInfo: ${info}`)) {
+        alert('Guia emitida com sucesso!');
+      }
+    }
+    function voltarPagina() { window.history.back(); }
+
+    /* XML */
+    const dropXml = document.getElementById('drop-zone-xml');
+    const inputXml = document.getElementById('file-input-xml');
+
+    dropXml.addEventListener('click', () => inputXml.click());
+    ['dragover', 'dragenter'].forEach(ev => {
+      dropXml.addEventListener(ev, e => { e.preventDefault(); dropXml.classList.add('dragover') });
+    });
+    ['dragleave', 'drop'].forEach(ev => {
+      dropXml.addEventListener(ev, e => { e.preventDefault(); dropXml.classList.remove('dragover') });
+    });
+    dropXml.addEventListener('drop', e => {
+      e.preventDefault();
+      const f = e.dataTransfer.files?.[0];
+      if (f) processarXML(f);
+    });
+    inputXml.addEventListener('change', e => { const f = e.target.files?.[0]; if (f) processarXML(f); });
+
+    function processarXML(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const xmlDoc = new DOMParser().parseFromString(e.target.result, 'application/xml');
+        const ns = "http://www.portalfiscal.inf.br/nfe";
+
+        const dhEmi = xmlDoc.getElementsByTagNameNS(ns, "dhEmi")[0] || xmlDoc.getElementsByTagNameNS(ns, "dEmi")[0];
+        if (dhEmi) {
+          const d = new Date(dhEmi.textContent);
+          document.getElementById('periodo-referencia').value = `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        }
+        const emit = xmlDoc.getElementsByTagNameNS(ns, "emit")[0];
+        const xNome = emit ? emit.getElementsByTagNameNS(ns, "xNome")[0]?.textContent : '';
+        if (xNome) document.getElementById('empresa').value = xNome;
+
+        const nNF = xmlDoc.getElementsByTagNameNS(ns, "nNF")[0]?.textContent;
+        if (nNF) {
+          const nfDisplay = formatNFWithDots9(nNF);
+          document.getElementById('numero-nota').value = nfDisplay;
+          setInfoBox(nNF);
+        }
+
+        let soma = 0;
+        const qCom = xmlDoc.getElementsByTagNameNS(ns, "qCom");
+        for (let i = 0; i < qCom.length; i++) soma += parseFloat(qCom[i].textContent || '0');
+        if (soma > 0) {
+          const compact = soma.toFixed(4).replace('.', '');
+          const five = compact.slice(0, 5);
+          document.getElementById('metros-cubicos').value = five.slice(0, 2) + ',' + five.slice(2);
+          calcularTributo();
+        }
+        goManualReview();
+      };
+      reader.readAsText(file);
+    }
+
+    /* PDF */
+    const dropPdf = document.getElementById('drop-zone-pdf');
+    const inputPdf = document.getElementById('file-input-pdf');
+
+    dropPdf.addEventListener('click', () => inputPdf.click());
+    ['dragover', 'dragenter'].forEach(ev => {
+      dropPdf.addEventListener(ev, e => { e.preventDefault(); dropPdf.classList.add('dragover') });
+    });
+    ['dragleave', 'drop'].forEach(ev => {
+      dropPdf.addEventListener(ev, e => { e.preventDefault(); dropPdf.classList.remove('dragover') });
+    });
+    dropPdf.addEventListener('drop', e => {
+      e.preventDefault();
+      const f = e.dataTransfer.files?.[0];
+      if (f) processarPDF(f);
+    });
+    inputPdf.addEventListener('change', e => {
+      const f = e.target.files?.[0];
+      if (f) processarPDF(f);
+    });
+
+    async function processarPDF(file) {
+      const reader = new FileReader();
+      reader.onload = async function () {
+        const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
+        let text = "";
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          text += content.items.map(it => it.str).join(" ") + "\n";
+        }
+
+        const empresaMatch = text.match(/RECEBEMOS DE\s+(.+?)\s+OS PRODUTOS/i);
+        if (empresaMatch) document.getElementById('empresa').value = empresaMatch[1].trim();
+
+        const nfFullMatch = text.match(/N[ºo]\.\s*([0-9.\s]{5,}?)\s+S[ée]rie/i);
+        if (nfFullMatch) {
+          let nfFull = nfFullMatch[1].replace(/\s+/g, '').trim();
+          if (!nfFull.includes('.')) nfFull = formatNFWithDots9(nfFull);
+          document.getElementById('numero-nota').value = nfFull;
+          setInfoBox(nfFull);
+        }
+
+        const dataMatch = text.match(/DATA DA EMISS[ÃA]O\s+(\d{2})\/(\d{2})\/(\d{4})/i);
+        if (dataMatch) document.getElementById('periodo-referencia').value = `${dataMatch[2]}/${dataMatch[3]}`;
+
+        const qtdMatch = text.match(/QUANTIDADE\s+([0-9]{5})/i);
+        if (qtdMatch) {
+          const raw = qtdMatch[1];
+          document.getElementById('metros-cubicos').value = raw.slice(0, 2) + ',' + raw.slice(2);
+          calcularTributo();
+        }
+        goManualReview();
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  </script>
+</body>
+
+</html>

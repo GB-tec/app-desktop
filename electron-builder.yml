@@ -1,0 +1,74 @@
+appId: com.gbsistemas.prefeitura
+productName: "GB Sistemas - Prefeitura"
+copyright: "Copyright © 2025 GB Sistemas"
+
+# Diretórios
+directories:
+  buildResources: assets
+  output: dist
+
+# Arquivos a incluir/excluir
+files:
+  - "**/*"
+  - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples}"
+  - "!**/node_modules/*.d.ts"
+  - "!**/node_modules/.bin"
+  - "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}"
+  - "!.editorconfig"
+  - "!**/._*"
+  - "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}"
+  - "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}"
+  - "!**/{appveyor.yml,.travis.yml,circle.yml}"
+  - "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+
+# Arquivos extra
+extraFiles:
+  - from: "serviceAccountKey.json"
+    to: "serviceAccountKey.json"
+
+# Configuração do Windows
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  icon: assets/icon.ico
+  publisherName: "GB Sistemas"
+
+# Configuração do NSIS (Windows Installer)
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  installerIcon: assets/icon.ico
+  uninstallerIcon: assets/icon.ico
+  installerHeaderIcon: assets/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "GB Sistemas - Prefeitura"
+  include: installer.nsh
+
+# Configuração do macOS
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  icon: assets/icon.icns
+  category: public.app-category.business
+
+# Configuração do Linux
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+  icon: assets/icons
+  category: Office
+
+# Publish (para distribuição automática)
+publish:
+  provider: github
+  owner: seu-usuario
+  repo: app-prefeitura

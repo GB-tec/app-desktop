@@ -1,0 +1,2501 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GbSoft - Dashboard</title>
+    <link rel="stylesheet" href="style_dash.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSKZO6JqTPQIaVsuMRF_NifGvuiLT2STc",
+            authDomain: "controle-usuario-64b08.firebaseapp.com",
+            projectId: "controle-usuario-64b08",
+            storageBucket: "controle-usuario-64b08.firebasestorage.app",
+            messagingSenderId: "1005734164997",
+            appId: "1:1005734164997:web:0cfa0b869178aa4b947a6c"
+        };
+        firebase.initializeApp(firebaseConfig);// Inicialização do Firebase
+        const db = firebase.firestore();// Obter referência do Firestore
+        document.addEventListener('DOMContentLoaded', function () {        // Verificar autenticação na página do Dashboard
+            firebase.auth().onAuthStateChanged(function (user) {
+                if (!user) {
+                    window.location.href = 'index.html';// Se não estiver autenticado, redirecionar para o login
+                }
+            });
+        });
+        const MAPEAMENTO_AUTOMACOES = {
+            'nfse-mensal': 'PREFEITURA_MENSAL',
+            'nfse-anual': 'PREFEITURA_ANUAL',
+            'darf': 'PREFEITURA_DARF',
+            'nf55': 'SEFAZ_NF55',
+            'nfce': 'SEFAZ_NFCE',
+            'cte': 'SEFAZ_CTE',
+            'ecacPJPF': 'CERTIDAO_ECAC',
+            'Municipal': 'CERTIDAO_MUNICIPAL',
+            'Sefaz': 'CERTIDAO_SEFAZ',
+            'FGTS': 'CERTIDAO_FGTS'
+        };
+
+        // 2. FUNÇÃO PARA DETECTAR SEÇÃO ATIVA:
+        function obterSecaoAtiva() {
+            const hash = window.location.hash.substring(1);
+            return hash || 'dashboard';
+        }
+
+        function obterTipoAutomacao() {
+            const secaoAtiva = obterSecaoAtiva();
+            return MAPEAMENTO_AUTOMACOES[secaoAtiva] || null;
+        }
+    </script>
+
+    <style>
+        /* Adicione ao seu arquivo CSS ou na tag <style> */
+        .btn-outline-primary {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            border-radius: 0.2rem;
+            background-color: rgb(113, 208, 121);
+            border-color: black;
+            color: black;
+        }
+
+        .btn-outline-primary:hover {
+            color: #ffffff;
+            background-color: #717171;
+            border-color: #000000;
+        }
+
+        .modal-dialog-centered {
+            display: flex;
+            align-items: center;
+            min-height: calc(100% - 1rem);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <nav class="sidebar">
+            <div class="menu-header">GB SISTEMAS</div>
+            <ul class="menu-categories">
+                <li class="menu-category">
+                    <div class="category-header">
+                        <i class="fa-solid fa-chart-bar"></i>
+                        <span>Prefeitura</span>
+                        <i class="fa-solid fa-chevron-down arrow"></i>
+                    </div>
+                    <ul class="submenu">
+                        <li><a href="#nfse-mensal"><i class="fa-solid fa-pen"></i>NFS-e mensal</a></li>
+                        <li><a href="#nfse-anual"><i class="fa-solid fa-dollar-sign"></i>NFS-e Anual</a></li>
+                        <li><a href="#darf"><i class="fa-solid fa-history"></i>DARF</a></li>
+
+                    </ul>
+                </li>
+                <li class="menu-category">
+                    <div class="category-header">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        <span>Sefaz</span>
+                        <i class="fa-solid fa-chevron-down arrow"></i>
+                    </div>
+                    <ul class="submenu">
+                        <li><a href="#nf55"><i class="fa-solid fa-file-alt"></i>Notas Fiscais 55</a></li>
+                        <li><a href="#nfce"><i class="fa-solid fa-receipt"></i>NFC-e</a></li>
+                        <li><a href="#cte"><i class="fa-solid fa-truck"></i>Cte Emissor</a></li>
+                    </ul>
+                </li>
+                <li class="menu-category">
+                    <div class="category-header">
+                        <i class="fa-solid fa-certificate"></i>
+                        <span>Certidões</span>
+                        <i class="fa-solid fa-chevron-down arrow"></i>
+                    </div>
+                    <ul class="submenu">
+                        <li><a href="#ecacPJPF"><i class="fa-solid fa-building"></i>Ecac PF e PJ</a></li>
+                        <li><a href="#Municipal"><i class="fa-solid fa-city"></i>Municipal</a></li>
+                        <li><a href="#Sefaz"><i class="fa-solid fa-landmark"></i>Sefaz</a></li>
+                        <li><a href="#FGTS"><i class="fa-solid fa-id-card"></i>Regularidade FGTS</a></li>
+                    </ul>
+                </li>
+                <!-- NOVO MENU "GUIAS" ADICIONADO AQUI -->
+                <li class="menu-category">
+                    <div class="category-header">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <span>Guias</span>
+                        <i class="fa-solid fa-chevron-down arrow"></i>
+                    </div>
+                    <ul class="submenu">
+                        <li><a href="#fethab"><i class="fa-solid fa-window-restore"></i>FETHAB</a></li>
+                    </ul>
+                </li>
+                <li class="menu-category">
+                    <div class="category-header">
+                        <i class="fa-solid fa-building"></i>
+                        <span>Empresas</span>
+                        <i class="fa-solid fa-chevron-down arrow"></i>
+                    </div>
+                    <ul class="submenu">
+                        <li><a href="#cadastroEMp" id="btnCadastrarEMP"><i class="fa-solid fa-plus"></i> Cadastrar</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="menu-category">
+                    <div class="category-header">
+                        <i class="fa-solid fa-cog"></i>
+                        <span>Configurações</span>
+                        <i class="fa-solid fa-chevron-down arrow"></i>
+                    </div>
+                    <ul class="submenu">
+                        <li><a href="#" id="btnGeral"><i class="fa-solid fa-key"></i> Credenciais</a></li>
+                        <li><a href="#" id="btnBuscar"><i class="fa-solid fa-ellipsis-vertical"></i> Geral</a></li>
+                    </ul>
+                </li>
+                <li class="menu-logout">
+                    <a href="#" id="btnLogout"><i class="fa-solid fa-sign-out-alt"></i> Sair</a>
+                </li>
+            </ul>
+        </nav>
+        <main class="main-content">
+            <div class="content">
+                <h2>Conteúdo principal</h2>
+                <p>Sistema de gestão fiscal</p>
+                <div id="empresasGrid" class="empresas-grid-container">
+                </div>
+            </div>
+        </main>
+    </div>
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered"> <!-- Centraliza o modal -->
+            <div class="modal-content">
+                <div class="modal-header text-center w-100"> <!-- Centraliza o título -->
+                    <h5 class="modal-title mx-auto" id="importModalLabel">Cadastrar empresas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body d-flex">
+                    <div class="menu-lateral">
+                        <button class="btn btn-light w-100 mb-1" onclick="mostrarConteudo('manual')">Importar
+                            Manual</button> <button class="btn btn-light w-100"
+                            onclick="mostrarConteudo('arquivo')">Importar
+                            Arquivo.txt</button>
+                    </div>
+                    <div class="conteudo-modal flex-grow-1 ps-3">
+                        <div id="conteudo-manual" class="conteudo">
+                            <input type="text" id="cadCnpjCpf" class="form-control mb-1" placeholder="CNPJ ou CPF">
+                            <input type="text" id="cadEmp" class="form-control mb-2" placeholder="Nome empresa">
+                            <input type="text" id="cadIE" class="form-control mb-2"
+                                placeholder="Inscrição Estadual (IE)">
+                            <button class="btn btn-primary" onclick="importEp()">Cadastrar</button>
+                        </div>
+
+                        <!-- ADICIONE esta seção no conteúdo-arquivo do modal de importação -->
+                        <div id="conteudo-arquivo" class="conteudo" style="display: none;">
+                            <div class="drop-area" id="dropArea">
+                                <div class="drop-message">
+                                    <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                    <p>Arraste um arquivo .txt e solte-o aqui</p>
+                                    <p class="text-muted">ou</p>
+                                    <label for="fileInput" class="btn btn-primary">
+                                        Selecionar Arquivo
+                                        <input type="file" id="fileInput" accept=".txt" style="display: none;">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- SEÇÃO ADICIONADA - Formato do arquivo -->
+                            <div class="formato-importacao mt-3">
+                                <strong>Formato esperado no arquivo .txt:</strong><br>
+                                CNPJ_OU_CPF;NOME DA EMPRESA;INSCRIÇÃO ESTADUAL<br><br>
+                                <em>Exemplos:</em><br>
+                                1º → 12.345.678/0001-90;EMPRESA LTDA;123456789<br>
+                                2º → 123.456.789-10;PRODUTOR RURAL LTDA;Isento<br>
+                                3º → 11.222.333/0001-44;TERCEIRA EMPRESA;987654321<br><br>
+                                <small class="text-muted">
+                                    * A Inscrição Estadual é opcional<br>
+                                    * Use ponto e vírgula (;) para separar os campos<br>
+                                    * Uma empresa/produtor por linha<br>
+                                    * Aceita tanto CNPJ (14 dígitos) quanto CPF (11 dígitos)
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="buscarModal" tabindex="-1" aria-labelledby="buscarModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="buscarModalLabel">⚙️ Configurações Gerais</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formConfiguracoes">
+                        <!-- Seção: Padrão de Nomenclatura -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary mb-3">📁 Organização de Arquivos</h6>
+
+                            <div class="mb-3">
+                                <label for="padrao" class="form-label">
+                                    <i class="fas fa-folder-tree me-2"></i>
+                                    Como deseja organizar as pastas dos arquivos:
+                                </label>
+                                <select id="padrao" name="padrao" class="form-select">
+                                    <option value="empresa-ano-mes">NOME_EMPRESA / ANO / MES</option>
+                                    <option value="ano-empresa-mes">ANO / NOME_EMPRESA / MES</option>
+                                    <option value="ano-mes-empresa">ANO / MES / NOME_EMPRESA</option>
+                                    <option value="mes-ano-empresa">MES / ANO / NOME_EMPRESA</option>
+                                    <option value="empresa-ano_mes">NOME_EMPRESA / ANO-MES</option>
+                                    <option value="ano_mes-empresa">ANO-MES / NOME_EMPRESA</option>
+                                </select>
+                                <div class="form-text">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="pastaDestino" class="form-label">
+                                    <i class="fas fa-folder-open me-2"></i>
+                                    Pasta de destino dos downloads:
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" id="pastaDestino" class="form-control"
+                                        placeholder="./downloads (padrão)" value="./downloads">
+                                    <button class="btn btn-outline-secondary" type="button" id="selecionarPasta"
+                                        title="Clique para selecionar uma pasta no seu computador">
+                                        <i class="fas fa-folder-open"></i>
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Seção: Notificações -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-success mb-3">🔔 Notificações</h6>
+
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="notificarDownloads" checked>
+                                <label class="form-check-label" for="notificarDownloads">
+                                    <i class="fas fa-bell me-2"></i>
+                                    Notificar quando downloads forem concluídos
+                                </label>
+                            </div>
+
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="notificarErros" checked>
+                                <label class="form-check-label" for="notificarErros">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Notificar quando houver erros no processamento
+                                </label>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Seção: Downloads -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-info mb-3">📥 Configurações de Download</h6>
+
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="extrairZip" checked>
+                                <label class="form-check-label" for="extrairZip">
+                                    <i class="fas fa-file-archive me-2"></i>
+                                    Extrair arquivos ZIP automaticamente
+                                </label>
+                            </div>
+
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="manterZip">
+                                <label class="form-check-label" for="manterZip">
+                                    <i class="fas fa-save me-2"></i>
+                                    Manter arquivo ZIP original após extrair
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Preview da estrutura
+                        <div class="alert alert-light border">
+                            <h6 class="fw-bold mb-2">
+                                <i class="fas fa-eye me-2"></i>
+                                Preview da estrutura de pastas:
+                            </h6>
+                            <div class="font-monospace small">
+                                <div id="previewEstrutura">
+                                    📂 downloads/<br>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;📂 TRIANGULO_TORNEARIA_LTDA/<br>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📂 2025/<br>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📂 07/<br>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📄
+                                    arquivo1.xml<br>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📄
+                                    arquivo2.xml
+                                </div>
+                            </div>
+                        </div> -->
+                        <hr>
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-file-invoice me-2"></i>
+                                Preferência de Consulta SEFAZ</h6>
+                            <p class="form-text">Selecione o tipo de documento que a automação da SEFAZ deve usar como
+                                padrão ao executar uma consulta.</p>
+
+                            <!-- ▼▼▼ ID ADICIONADO AQUI ▼▼▼ -->
+                            <div id="sefaz-preference-options">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="preferenciaSefaz" id="prefCNPJ"
+                                        value="CNPJ" checked>
+                                    <label class="form-check-label" for="prefCNPJ">
+                                        CNPJ (Padrão)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="preferenciaSefaz" id="prefIE"
+                                        value="IE">
+                                    <label class="form-check-label" for="prefIE">
+                                        Inscrição Estadual (IE)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="preferenciaSefaz" id="prefCPF"
+                                        value="CPF">
+                                    <label class="form-check-label" for="prefCPF">
+                                        CPF
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="salvarConfiguracoesBtnGeral">
+                        <i class="fas fa-save me-1"></i>
+                        Salvar Configurações
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- SUBSTITUA o modal editarEmpresaModal existente por esta versão atualizada -->
+    <!-- Modal de Edição de Empresa ATUALIZADO -->
+    <div class="modal fade" id="editarEmpresaModal" tabindex="-1" aria-labelledby="editarEmpresaModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarEmpresaModalLabel">Editar Empresa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditarEmpresa">
+                        <input type="hidden" id="editEmpresaId">
+                        <div class="mb-3">
+                            <label for="editNome" class="form-label">Nome da Empresa</label>
+                            <input type="text" class="form-control" id="editNome" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCnpj" class="form-label">CNPJ</label>
+                            <input type="text" class="form-control" id="editCnpj" required readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editIE" class="form-label">Inscrição Estadual (I.E)</label>
+                            <input type="text" class="form-control" id="editIE" placeholder="Opcional">
+                        </div>
+
+                        <!-- CAMPO DE STATUS ADICIONADO -->
+                        <div class="mb-3">
+                            <label for="editStatus" class="form-label">Status</label>
+                            <select class="form-select" id="editStatus">
+                                <option value="ativa">Ativa</option>
+                                <option value="inativa">Inativa</option>
+                            </select>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="salvarEdicaoBtn">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script para atualizar preview -->
+    <script>
+        const exemploSpan = document.getElementById('exemploSpan');
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const padraoSelect = document.getElementById('padrao');
+            const pastaDestinoInput = document.getElementById('pastaDestino');
+            const previewDiv = document.getElementById('previewEstrutura');
+            const salvarBtn = document.getElementById('salvarConfiguracoesBtnGeral');
+            const notificarDownloadsCheck = document.getElementById('notificarDownloads');
+            const notificarErrosCheck = document.getElementById('notificarErros');
+            const extrairZipCheck = document.getElementById('extrairZip');
+            const manterZipCheck = document.getElementById('manterZip');
+
+            function atualizarPreview() {
+                const padraoSelect = document.getElementById('padrao');
+                const pastaDestinoInput = document.getElementById('pastaDestino');
+                const previewDiv = document.getElementById('previewEstrutura');
+                const exemploSpan = document.getElementById('exemploSpan');
+
+                if (!padraoSelect || !pastaDestinoInput || !previewDiv) {
+                    console.log('Elementos para preview não encontrados');
+                    return;
+                }
+
+                const padrao = padraoSelect.value;
+                const pastaBase = pastaDestinoInput.value || './downloads';
+                const exemplo = gerarExemplo(padrao);
+
+                if (exemploSpan) {
+                    exemploSpan.textContent = exemplo;
+                }
+
+                // Atualizar preview da estrutura
+                const caminhoCompleto = `${pastaBase}/${exemplo}`.replace(/\\/g, '/');
+                const partes = caminhoCompleto.split('/');
+
+                let preview = '';
+                let indentacao = '';
+
+                partes.forEach((parte, index) => {
+                    if (parte && parte !== '.') {
+                        const icone = index === partes.length - 1 ? '' : '📂 ';
+                        preview += `${indentacao}${icone}${parte}/<br>`;
+                        indentacao += '&nbsp;&nbsp;&nbsp;&nbsp;';
+                    }
+                });
+
+                preview += `${indentacao}📄 arquivo1.xml<br>`;
+                preview += `${indentacao}📄 arquivo2.xml`;
+
+                previewDiv.innerHTML = preview;
+            }
+            function gerarExemplo(padrao) {
+                const empresa = 'TRIANGULO_TORNEARIA_LTDA';
+                const ano = '2025';
+                const mes = '07';
+
+                switch (padrao) {
+                    case 'empresa-ano-mes':
+                        return `${empresa} / ${ano} / ${mes}`;
+                    case 'ano-empresa-mes':
+                        return `${ano} / ${empresa} / ${mes}`;
+                    case 'ano-mes-empresa':
+                        return `${ano} / ${mes} / ${empresa}`;
+                    case 'mes-ano-empresa':
+                        return `${mes} / ${ano} / ${empresa}`;
+                    case 'ano_mes-empresa':
+                        return `${ano}-${mes} / ${empresa}`;
+                    default:
+                        return `${empresa} / ${ano} / ${mes}`;
+                }
+            }
+
+            padraoSelect.addEventListener('change', atualizarPreview);
+            pastaDestinoInput.addEventListener('input', atualizarPreview);
+
+            // Atualizar preview inicial
+            atualizarPreview();
+
+            async function salvarConfiguracoes() {
+                // --- 1. Coleta dos Dados da Interface ---
+                // Garante que os elementos existem antes de tentar acessá-los
+                const padraoSelect = document.getElementById('padrao');
+                const pastaDestinoInput = document.getElementById('pastaDestino');
+                const notificarDownloadsCheck = document.getElementById('notificarDownloads');
+                const notificarErrosCheck = document.getElementById('notificarErros');
+                const extrairZipCheck = document.getElementById('extrairZip');
+                const manterZipCheck = document.getElementById('manterZip');
+                const preferenciaSefazRadio = document.querySelector('input[name="preferenciaSefaz"]:checked');
+
+                // Cria o objeto de configurações com todas as opções
+                const configuracoes = {
+                    padraoNomeacao: padraoSelect.value,
+                    pastaDestino: pastaDestinoInput.value.trim() || './downloads',
+                    notificarDownloads: notificarDownloadsCheck?.checked ?? true,
+                    notificarErros: notificarErrosCheck?.checked ?? true,
+                    extrairZip: extrairZipCheck?.checked ?? true,
+                    manterZip: manterZipCheck?.checked ?? false,
+                    // Adiciona a preferência de consulta SEFAZ ao objeto
+                    preferenciaConsultaSefaz: preferenciaSefazRadio ? preferenciaSefazRadio.value : 'CNPJ' // Usa 'CNPJ' como padrão seguro
+                };
+
+                // --- 2. Salva a Preferência no LocalStorage ---
+                // Isso permite que a função `executarAutomacao` leia a preferência de forma rápida e síncrona.
+                localStorage.setItem('configPreferenciaSefaz', configuracoes.preferenciaConsultaSefaz);
+                console.log(`Preferência de consulta SEFAZ salva no localStorage: ${configuracoes.preferenciaConsultaSefaz}`);
+
+                // --- 3. Envio dos Dados para o Backend ---
+                try {
+                    // Verifica se está rodando no Electron para usar a API nativa
+                    if (window.electronAPI && typeof window.electronAPI.salvarConfiguracoes === 'function') {
+                        console.log('Salvando configurações via Electron API...');
+                        const result = await window.electronAPI.salvarConfiguracoes(configuracoes);
+                        if (result.success) {
+                            exibirAlerta('✅ Configurações salvas com sucesso!', 'sucesso');
+                        } else {
+                            throw new Error(result.error || 'Erro desconhecido no Electron');
+                        }
+                    } else {
+                        // Se não estiver no Electron, usa uma requisição HTTP para um servidor web
+                        console.log('Salvando configurações via Fetch API...');
+                        const response = await fetch('/api/salvar-configuracoes', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(configuracoes)
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || `Erro HTTP ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        if (data.success) {
+                            exibirAlerta('✅ Configurações salvas com sucesso!', 'sucesso');
+                        } else {
+                            throw new Error(data.error || 'O servidor retornou um erro');
+                        }
+                    }
+
+                    // --- 4. Finalização e Feedback ---
+                    // Fecha o modal de configurações após o sucesso
+                    const modalElement = document.getElementById("buscarModal");
+                    if (modalElement) {
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                        }
+                    }
+
+                } catch (error) {
+                    // Captura e exibe qualquer erro que ocorra durante o processo
+                    console.error('❌ Erro ao salvar configurações:', error);
+                    exibirAlerta(`❌ Erro ao salvar: ${error.message}`, 'erro');
+                }
+            }
+
+            salvarBtn.addEventListener('click', salvarConfiguracoes);
+
+            const selecionarPasta = document.getElementById('selecionarPasta');
+            if (selecionarPasta) {
+                selecionarPasta.addEventListener('click', function () {
+                    exibirAlerta('Funcionalidade de seleção de pasta em desenvolvimento', 'info');
+                });
+            }
+
+        });
+
+    </script>
+    <div class="modal fade" id="credenciaisModal" tabindex="-1" aria-labelledby="credenciaisModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="credenciaisModalLabel">Credenciais para Automações</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formCredenciais" enctype="multipart/form-data">
+                        <!-- PREFEITURA -->
+                        <small class="fw-bold">Prefeitura</small>
+                        <input type="text" class="form-control form-control-sm mb-2" id="usuarioPrefeitura"
+                            placeholder="Usuário">
+                        <div class="input-group mb-3">
+                            <input type="password" class="form-control form-control-sm" id="senhaPrefeitura"
+                                placeholder="Senha">
+                            <button class="btn btn-outline-secondary btn-sm" type="button"
+                                onclick="togglePassword('senhaPrefeitura')">
+                                <i class="bi bi-eye" id="eyeIcon-senhaPrefeitura"></i>
+                            </button>
+                        </div>
+                        <!-- SEFAZ -->
+                        <small class="fw-bold">SEFAZ</small>
+                        <input type="text" class="form-control form-control-sm mb-2" id="crcSefaz" placeholder="CRC">
+                        <div class="input-group mb-3">
+                            <input type="password" class="form-control form-control-sm" id="senhaSefaz"
+                                placeholder="Senha">
+                            <button class="btn btn-outline-secondary btn-sm" type="button"
+                                onclick="togglePassword('senhaSefaz')">
+                                <i class="bi bi-eye" id="eyeIcon-senhaSefaz"></i>
+                            </button>
+                        </div>
+                        <!-- CERTIFICADO DIGITAL -->
+                        <small class="fw-bold">Certificado Digital (.pfx ou .p12)</small>
+                        <input type="file" class="form-control form-control-sm mb-2" id="certificadoArquivo"
+                            accept=".pfx,.p12" required>
+                        <!-- Senha do certificado (sempre exibida após seleção) -->
+                        <div id="senhaCertContainer" class="d-none">
+                            <div class="input-group mb-2">
+                                <input type="password" class="form-control form-control-sm" id="senhaCertificado"
+                                    placeholder="Senha do certificado" required>
+                                <button class="btn btn-outline-secondary btn-sm" type="button"
+                                    onclick="togglePassword('senhaCertificado')">
+                                    <i class="bi bi-eye" id="eyeIcon-senhaCertificado"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="salvarCredenciaisBtn">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+    <script>
+        function exibirAlerta(mensagem, tipo = "sucesso") { // Função para exibir o alerta animado
+            const alerta = document.createElement("div");
+            alerta.className = "meu-alerta";
+            alerta.innerText = mensagem;
+            document.body.appendChild(alerta); // Animação de entrada
+            setTimeout(() => alerta.style.opacity = "1", 100);
+            setTimeout(() => {// Remover alerta após 3 segundos
+                alerta.style.opacity = "0";
+                setTimeout(() => alerta.remove(), 500);
+            }, 3000);
+        }
+        document.getElementById("certificadoArquivo").addEventListener("change", function () {
+            const senhaContainer = document.getElementById("senhaCertContainer");
+            if (this.files.length > 0) {
+                senhaContainer.classList.remove("d-none");
+                document.getElementById("senhaCertificado").focus(); // foco automático no campo
+            } else {
+                senhaContainer.classList.add("d-none");
+                document.getElementById("senhaCertificado").value = "";
+            }
+        });
+        // Salvar configurações gerais
+        document.getElementById("salvarConfiguracoesBtnGeral").addEventListener("click", async () => {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                exibirAlerta('Faça login para salvar configurações', 'erro');
+                return;
+            }
+
+            try {
+                const padraoSelecionado = document.getElementById("padrao").value;
+                const notificarDownloads = document.getElementById("notificarDownloads")?.checked || false;
+                const pastaDestino = document.getElementById("pastaDestino")?.value || "";
+
+                const configuracoes = {
+                    padraoNomeacao: padraoSelecionado,
+                    notificarDownloads: notificarDownloads,
+                    pastaDestino: pastaDestino,
+                    dataAtualizacao: firebase.firestore.FieldValue.serverTimestamp(),
+                    usuarioId: user.uid
+                };
+
+                // Salvar configurações na subcoleção do usuário
+                await db.collection('usuarios').doc(user.uid).collection('configuracoes').doc('gerais').set(configuracoes);
+
+                console.log("✅ Configurações salvas:", configuracoes);
+                exibirAlerta('✅ Configurações salvas com sucesso!', 'sucesso');
+
+                // Fechar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById("buscarModal"));
+                modal.hide();
+
+                // Atualizar cache local
+                localStorage.setItem('configPadraoNomeacao', padraoSelecionado);
+                localStorage.setItem('configNotificarDownloads', notificarDownloads);
+                localStorage.setItem('configPastaDestino', pastaDestino);
+
+            } catch (error) {
+                console.error('❌ Erro ao salvar configurações:', error);
+                exibirAlerta('❌ Erro ao salvar configurações: ' + error.message, 'erro');
+            }
+        });
+
+        // 2. ADICIONE esta função para carregar configurações:
+
+        async function carregarConfiguracoes() {
+            try {
+                let configuracoes = {};
+
+                if (window.electronAPI) {
+                    // Rodando no Electron
+                    const result = await window.electronAPI.carregarConfiguracoes();
+                    if (result.success) {
+                        configuracoes = result.configuracoes;
+                    }
+                } else {
+                    // Rodando no navegador
+                    const response = await fetch('/api/configuracoes');
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            configuracoes = data.configuracoes;
+                        }
+                    }
+                }
+                if (configuracoes.preferenciaConsultaSefaz) {
+                    const prefRadio = document.getElementById(`pref${configuracoes.preferenciaConsultaSefaz}`);
+                    if (prefRadio) {
+                        prefRadio.checked = true;
+                    }
+                } else {
+                    // Se não houver configuração salva, marca CNPJ como padrão
+                    document.getElementById('prefCNPJ').checked = true;
+                }
+
+                // Aplicar configurações aos elementos da interface
+                const padraoSelect = document.getElementById('padrao');
+                const pastaDestinoInput = document.getElementById('pastaDestino');
+                const notificarDownloadsCheck = document.getElementById('notificarDownloads');
+                const notificarErrosCheck = document.getElementById('notificarErros');
+                const extrairZipCheck = document.getElementById('extrairZip');
+                const manterZipCheck = document.getElementById('manterZip');
+
+                if (padraoSelect) padraoSelect.value = configuracoes.padraoNomeacao || 'empresa-ano-mes';
+                if (pastaDestinoInput) pastaDestinoInput.value = configuracoes.pastaDestino || './downloads';
+                if (notificarDownloadsCheck) notificarDownloadsCheck.checked = configuracoes.notificarDownloads !== false;
+                if (notificarErrosCheck) notificarErrosCheck.checked = configuracoes.notificarErros !== false;
+                if (extrairZipCheck) extrairZipCheck.checked = configuracoes.extrairZip !== false;
+                if (manterZipCheck) manterZipCheck.checked = configuracoes.manterZip === true;
+
+                console.log('✅ Configurações carregadas:', configuracoes);
+
+                // Atualizar preview se a função existir
+                if (typeof atualizarPreview === 'function') {
+                    atualizarPreview();
+                }
+
+            } catch (error) {
+                console.error('❌ Erro ao carregar configurações:', error);
+                // Usar valores padrão em caso de erro
+                const padraoSelect = document.getElementById('padrao');
+                const pastaDestinoInput = document.getElementById('pastaDestino');
+                if (padraoSelect) padraoSelect.value = 'empresa-ano-mes';
+                if (pastaDestinoInput) pastaDestinoInput.value = './downloads';
+            }
+        }
+
+        let configCarregada = false;
+
+        async function carregarConfiguracoesSegura() {
+            if (configCarregada) return; // evita rodar mais de uma vez
+            configCarregada = true;
+            await carregarConfiguracoes();
+        }
+
+        document.addEventListener('DOMContentLoaded', carregarConfiguracoesSegura);
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) carregarConfiguracoesSegura();
+        });
+
+        document.getElementById("salvarCredenciaisBtn").addEventListener("click", async () => {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                exibirAlerta('Faça login para salvar credenciais', 'erro');
+                return;
+            }
+            try {
+                const certificado = document.getElementById("certificadoArquivo").files[0];
+                const senhaCertificado = document.getElementById("senhaCertificado").value;
+                const credenciais = {
+                    prefeitura: {
+                        usuario: document.getElementById("usuarioPrefeitura").value.trim(),
+                        senha: document.getElementById("senhaPrefeitura").value.trim()
+                    },
+                    sefaz: {
+                        crc: document.getElementById("crcSefaz").value.trim(),
+                        senha: document.getElementById("senhaSefaz").value.trim()
+                    },
+                    certificadoDigital: certificado ? {
+                        nome: certificado.name,
+                        senha: senhaCertificado.trim()
+                    } : null,
+                    dataAtualizacao: firebase.firestore.FieldValue.serverTimestamp(),
+                    usuarioId: user.uid
+                };
+                // Salvar credenciais na subcoleção do usuário
+                await db.collection('usuarios').doc(user.uid).collection('credenciais').doc('automacao').set(credenciais);
+                console.log("✅ Credenciais salvas:", credenciais);
+                exibirAlerta('✅ Credenciais salvas com sucesso!', 'sucesso');
+                // Fechar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById("credenciaisModal"));
+                modal.hide();
+                // Limpar formulário
+                document.getElementById("formCredenciais").reset();
+                document.getElementById("senhaCertContainer").classList.add("d-none");
+            } catch (error) {
+                console.error('❌ Erro ao salvar credenciais:', error);
+                exibirAlerta('❌ Erro ao salvar credenciais: ' + error.message, 'erro');
+            }
+        });
+
+        // ADICIONAR função para carregar credenciais existentes
+        async function carregarCredenciais() {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+            try {
+                const doc = await db.collection('usuarios').doc(user.uid).collection('credenciais').doc('automacao').get();
+                if (doc.exists) {
+                    const credenciais = doc.data();
+                    // Preencher campos do formulário
+                    if (credenciais.prefeitura) {
+                        document.getElementById("usuarioPrefeitura").value = credenciais.prefeitura.usuario || '';
+                        document.getElementById("senhaPrefeitura").value = credenciais.prefeitura.senha || '';
+                    }
+                    if (credenciais.sefaz) {
+                        document.getElementById("crcSefaz").value = credenciais.sefaz.crc || '';
+                        document.getElementById("senhaSefaz").value = credenciais.sefaz.senha || '';
+                    }
+                    console.log('✅ Credenciais carregadas com sucesso');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao carregar credenciais:', error);
+            }
+        }
+        async function buscarCredenciaisParaAutomacao() {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                throw new Error('Usuário não autenticado');
+            }
+            try {
+                const doc = await db.collection('usuarios').doc(user.uid).collection('credenciais').doc('automacao').get();
+                if (!doc.exists) {
+                    throw new Error('Credenciais não encontradas. Configure suas credenciais primeiro.');
+                }
+                const credenciais = doc.data();
+                // Validar se as credenciais essenciais existem
+                if (!credenciais.prefeitura?.usuario || !credenciais.prefeitura?.senha) {
+                    throw new Error('Credenciais da prefeitura não configuradas');
+                }
+                if (!credenciais.sefaz?.crc || !credenciais.sefaz?.senha) {
+                    throw new Error('Credenciais do SEFAZ não configuradas');
+                }
+                return credenciais;
+            } catch (error) {
+                console.error('❌ Erro ao buscar credenciais:', error);
+                throw error;
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const btnBuscar = document.getElementById('btnBuscar');
+            if (btnBuscar) { // ADICIONAR VERIFICAÇÃO
+                btnBuscar.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const buscarModal = new bootstrap.Modal(document.getElementById('buscarModal'));
+                    buscarModal.show();
+                });
+            }
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            const btnGeral = document.getElementById('btnGeral');
+            if (btnGeral) { // ADICIONAR VERIFICAÇÃO
+                btnGeral.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const credenciaisModal = new bootstrap.Modal(document.getElementById('credenciaisModal'));
+                    credenciaisModal.show();
+                });
+            }
+        });
+        document.getElementById('importModal').addEventListener('hidden.bs.modal', function () {// Adicionar evento para quando o modal for fechado
+            window.location.reload(); // Recarregar a página
+        });
+        function continuarCadastro() {
+            document.getElementById('cadCnpj').value = '';   // Limpar os campos de CNPJ e nome da empresa
+            document.getElementById('cadEmp').value = '';
+            const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmModal')); // Simplesmente fecha o modal
+            confirmModal.hide();
+            document.getElementById('cadCnpj').focus();// Opcional: Definir foco no campo de CNPJ
+        }
+        function finalizarCadastro() {
+            window.location.reload();// Recarrega a página
+        }
+        document.getElementById('confirmModal').addEventListener('hidden.bs.modal', function () { // Add event listener to handle modal close (X button)
+            finalizarCadastro();
+        });
+        function normalizarCNPJ(cnpj) { // Função para validar e formatar CNPJ
+            return cnpj.replace(/[^\d]/g, '');
+        }
+        // 5. MODIFICAR a função carregarEmpresas para suportar filtro
+        function carregarEmpresas(filtro = null) {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                console.error('Usuário não autenticado');
+                return;
+            }
+            const grid = document.getElementById('empresasGrid');
+            if (!grid) return;
+
+            grid.innerHTML = ''; // Limpar grid
+            const empresasDoUsuarioRef = db.collection('usuarios').doc(user.uid).collection('empresas');
+
+            empresasDoUsuarioRef
+                .get()
+                .then((snapshot) => {
+                    if (snapshot.empty) {
+                        grid.innerHTML = '<p>Nenhuma empresa cadastrada</p>';
+                        return;
+                    }
+                    const empresas = [];
+                    snapshot.forEach((doc) => {
+                        const empresa = doc.data();
+                        empresas.push(empresa);
+                    });
+
+                    // APLICAR FILTRO SE FORNECIDO
+                    const empresasFiltradas = filtro ? filtrarEmpresas(empresas, filtro) : empresas;
+
+                    localStorage.setItem('empresasCadastradas', JSON.stringify(empresas));
+                    renderizarEmpresas(empresasFiltradas);
+
+                    // Atualizar contador
+                    const contador = document.getElementById('contadorEmpresas');
+                    if (contador) {
+                        if (filtro) {
+                            contador.textContent = `${empresasFiltradas.length} de ${empresas.length} empresa(s) encontrada(s)`;
+                        } else {
+                            contador.textContent = `${empresas.length} empresa(s) cadastrada(s)`;
+                        }
+                    }
+                })
+                .catch((error) => {
+                    console.error("Erro ao carregar empresas:", error);
+                    grid.innerHTML = `<p>Erro ao carregar empresas: ${error.message}</p>`;
+                });
+        }
+
+        // 2. CORREÇÃO NA FUNÇÃO renderizarEmpresas() - Exibir I.E no grid
+        function renderizarEmpresas(empresas) {
+            const grid = document.getElementById('empresasGrid');
+            if (!grid) {
+                console.error('Elemento empresasGrid não encontrado');
+                return;
+            }
+            grid.innerHTML = '';
+
+            if (empresas.length === 0) {
+                grid.innerHTML = '<p>Nenhuma empresa cadastrada</p>';
+                return;
+            }
+
+            empresas.forEach((empresa) => {
+                const div = document.createElement('div');
+                div.className = 'empresa';
+
+                // Determinar qual documento mostrar
+                let documentoTexto = '';
+                if (empresa.tipoDocumento === 'CNPJ' || empresa.cnpj) {
+                    documentoTexto = `CNPJ: ${empresa.documentoFormatado || empresa.cnpjFormatado || formatarCNPJ(empresa.cnpj || empresa.documento)}`;
+                } else if (empresa.tipoDocumento === 'CPF' || empresa.cpf) {
+                    documentoTexto = `CPF: ${empresa.documentoFormatado || empresa.cpfFormatado || formatarCPF(empresa.cpf || empresa.documento)}`;
+                } else {
+                    // Fallback para dados antigos
+                    documentoTexto = `CNPJ: ${empresa.cnpjFormatado || formatarCNPJ(empresa.cnpj)}`;
+                }
+
+                const ieTexto = empresa.ie ? ` | I.E: ${empresa.ie}` : '';
+
+                div.innerHTML = `
+            <p><strong>Nome:</strong> ${empresa.nome} | <strong>${documentoTexto}</strong>${ieTexto}</p>
+            <button class="btn-executar" onclick="executarAutomacao('${empresa.cnpj || empresa.documento}', '${empresa.nome}', '${empresa.ie || ''}', '${empresa.cpf || ''}')">
+                <i class="bi bi-caret-right-fill" style="margin-right: 5px;"></i>Executar
+            </button>
+        `;
+                grid.appendChild(div);
+            });
+        }
+
+        function carregarEmpresasDoLocalStorage() {// Função para carregar empresas do localStorage quando a página for carregada
+            const empresasSalvas = localStorage.getItem('empresasCadastradas');
+            if (empresasSalvas) {
+                const empresas = JSON.parse(empresasSalvas);
+                renderizarEmpresas(empresas);
+            }
+        }
+        document.getElementById('dropArea').addEventListener('drop', function (e) { // Event Listeners para importação de arquivo
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'text/plain') {
+                importarArquivoTXT(files[0]);
+            }
+        });
+        document.getElementById('fileInput').addEventListener('change', function (e) {
+            const files = e.target.files;
+            if (files.length > 0 && files[0].type === 'text/plain') {
+                importarArquivoTXT(files[0]);
+            }
+        });
+        document.addEventListener('DOMContentLoaded', function () {  // Carregar empresas quando a página carregar
+            carregarEmpresas();
+        });
+        function adicionarEmpresa(cnpj, nome) {// Verificar se há um usuário autenticado
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                console.error('Usuário não autenticado');
+                alert('Faça login para cadastrar empresas');
+                return Promise.reject(new Error('Usuário não autenticado'));
+            }
+            if (!validarCNPJ(cnpj)) {// Validar CNPJ
+                console.error('CNPJ inválido:', cnpj);
+                alert('CNPJ inválido. Por favor, verifique o número.');
+                return Promise.reject(new Error('CNPJ inválido'));
+            }
+
+            const cnpjLimpo = normalizarCNPJ(cnpj);// Limpar CNPJ
+            const empresasDoUsuarioRef = db.collection('usuarios').doc(user.uid).collection('empresas'); // Referência para a subcoleção de empresas do usuário
+            return empresasDoUsuarioRef.doc(cnpjLimpo).get()  // Verificar se a empresa já existe para este usuário
+                .then((docSnapshot) => {
+                    if (docSnapshot.exists) {
+                        console.log(`Empresa com CNPJ ${cnpjLimpo} já existe. Atualizando...`);
+                    }
+                    const empresa = { // Objeto de empresa padronizado
+                        cnpj: cnpjLimpo,
+                        cnpjFormatado: cnpj,
+                        nome: nome.trim(),
+                        dataCadastro: firebase.firestore.FieldValue.serverTimestamp(),
+                        ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp(),
+                        usuarioCadastro: user.uid
+                    };
+                    return empresasDoUsuarioRef.doc(cnpjLimpo).set(empresa, { merge: true });// Usar set com merge para evitar duplicatas
+                })
+                .then(() => {
+                    console.log(`Empresa ${nome} cadastrada/atualizada com sucesso!`);
+                    carregarEmpresas(); // Recarregar apenas empresas do usuário atual
+                })
+                .catch((error) => {
+                    console.error('Erro ao adicionar/atualizar empresa:', error);
+                    alert(`Erro ao adicionar empresa: ${error.message}`);
+                    throw error;
+                });
+        }
+
+        function mostrarConteudo(tipo) {
+            document.querySelectorAll('.conteudo').forEach(div => div.style.display = 'none');
+            document.getElementById(`conteudo-${tipo}`).style.display = 'block';
+        }
+        function listarEmpresas() {
+            db.collection('empresas')
+                .get()
+                .then((snapshot) => {
+                    const empresas = [];
+                    snapshot.forEach((doc) => {
+                        empresas.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    console.log('Empresas cadastradas:', empresas);
+                    return empresas;
+                })
+                .catch((error) => {
+                    console.error('Erro ao listar empresas:', error);
+                });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            criarColecaoEmpresas();// Criar coleção inicial (opcional)
+            document.getElementById('btnCadastrarEmpresa').addEventListener('click', () => {// Botão de cadastro manual
+                const cnpj = document.getElementById('inputCNPJ').value;
+                const nome = document.getElementById('inputNomeEmpresa').value;
+                adicionarEmpresa(cnpj, nome);
+            });
+            document.getElementById('btnListarEmpresas').addEventListener('click', listarEmpresas); // Botão para listar empresas
+        });
+    </script>
+    <style>
+        .menu-lateral {
+            width: 200px;
+            border-right: 1px solid #ddd;
+            padding-right: 10px;
+        }
+
+        .conteudo {
+            display: none;
+        }
+
+        .modal-header {
+            justify-content: center;
+        }
+    </style>
+    <script>
+        let sidebarAnimando = false;
+
+        function iniciarAnimacaoSidebar() {
+            if (sidebarAnimando) return; // já está animando, não reinicia
+            sidebarAnimando = true;
+            document.querySelector(".sidebar").classList.add("animando");
+        }
+
+        function pararAnimacaoSidebar() {
+            sidebarAnimando = false;
+            document.querySelector(".sidebar").classList.remove("animando");
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {// Add event listener for the Cadastrar button
+            const cadastrarBtn = document.getElementById('btnCadastrar');
+            if (cadastrarBtn) {
+                cadastrarBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const modal = new bootstrap.Modal(document.getElementById('importModal'));
+                    modal.show();
+                });
+            }
+        });
+        const style = document.createElement('style');
+        style.textContent = `
+            .drop-area {
+                border: 2px dashed #ccc;
+                border-radius: 8px;
+                padding: 40px 20px;
+                text-align: center;
+                background-color: #f8f9fa;
+                transition: all 0.3s;
+            }
+            .drop-area.highlight {
+                border-color: #0d6efd;
+                background-color: #e9ecef;
+            }
+            .drop-message {
+                color: #6c757d;
+            }
+            .empresas-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
+            }
+          .empresa {
+    position: relative;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px 12px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    min-height: 40px; /* Ajuste conforme necessário */
+    display: flex;
+    align-items: center; /* Centraliza os itens verticalmente */
+    justify-content: space-between; /* Distribui os elementos na linha */
+    gap: 10px; /* Espaçamento entre os itens */
+}
+    .empresa p {
+    margin: 0;
+    white-space: nowrap; /* Evita que os textos quebrem para a linha de baixo */
+}
+            .empresa:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
+.btn-executar {
+    background-color: #1E1E1E;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+        `;
+        document.head.appendChild(style);
+        function iniciarScrapingEmpresas() {
+            const content = document.querySelector('.content');
+            if (content) {
+                content.innerHTML = `
+                    <h2>Importando Empresas</h2>
+                    <p>Iniciando importação de empresas. Este processo pode levar alguns minutos...</p>
+                    <div class="loading-indicator">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                `;
+            }
+            fetch('/api/scrape-companies')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Falha na requisição: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Resposta da API:', data);
+                    if (content) {
+                        content.innerHTML = `
+                            <h2>Importação de Empresas Iniciada</h2>
+                            <p>${data.message}</p>
+                            <p>As empresas estão sendo importadas em segundo plano. Você pode consultar a lista de empresas clicando em "Buscar".</p>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao iniciar importação:', error);
+                    if (content) {
+                        content.innerHTML = `
+                            <h2>Erro na Importação</h2>
+                            <p>Ocorreu um erro ao iniciar a importação de empresas.</p>
+                            <p>Detalhes: ${error.message}</p>
+                        `;
+                    }
+                });
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const categoryHeaders = document.querySelectorAll('.category-header');   // Adicionar evento de clique para os cabeçalhos de categoria
+            categoryHeaders.forEach(header => {
+                header.addEventListener('click', function () {
+                    this.parentElement.classList.toggle('active');   // Toggle da classe 'active' no elemento pai (li.menu-category)
+                    const arrow = this.querySelector('.arrow');
+                    if (this.parentElement.classList.contains('active')) {
+                        arrow.classList.remove('fa-chevron-down');
+                        arrow.classList.add('fa-chevron-up');
+                    } else {
+                        arrow.classList.remove('fa-chevron-up');
+                        arrow.classList.add('fa-chevron-down');
+                    }
+                });
+            });
+            const searchInput = document.getElementById('searchInput');   // Get the search input element
+            if (searchInput) {  // Add focus event listener
+                searchInput.addEventListener('focus', function () {
+                    this.classList.add('focused');
+                });
+                searchInput.addEventListener('blur', function () {  // Add blur event listener
+                    this.classList.remove('focused');
+                });
+                searchInput.style.cursor = 'text';  // Set cursor to text
+            }
+            const logoutButton = document.getElementById('btnLogout');// Adicionar evento de logout ao botão
+            if (logoutButton) {
+                logoutButton.addEventListener('click', function () {
+                    if (typeof fazerLogout === 'function') {
+                        fazerLogout();
+                    } else {
+                        console.error('Função de logout não encontrada');
+                    }
+                });
+            }
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            const btnCadastrarEMP = document.getElementById('btnCadastrarEMP');
+            const btnLogout = document.getElementById('btnLogout');
+            const fileInput = document.getElementById('fileInput');
+            const dropArea = document.getElementById('dropArea');
+            // ALTERAÇÃO: btnCadastrarEMP agora apenas carrega o conteúdo HTML
+            if (btnCadastrarEMP) {
+                btnCadastrarEMP.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    mostrarConteudo('cadastrar'); // Chama a função que já existe para mostrar conteúdo
+                });
+            }
+            // Manter o resto do código inalterado
+            if (btnLogout) {
+                btnLogout.addEventListener('click', function () {
+                    fazerLogout();
+                });
+            }
+            if (fileInput) {
+                fileInput.addEventListener('change', function (e) {
+                    const files = e.target.files;
+                    if (files.length > 0 && files[0].type === 'text/plain') {
+                        importarArquivoTXT(files[0]);
+                    }
+                });
+            }
+            if (dropArea) {
+                dropArea.addEventListener('drop', function (e) {
+                    e.preventDefault();
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0 && files[0].type === 'text/plain') {
+                        importarArquivoTXT(files[0]);
+                    }
+                });
+            }
+            carregarEmpresas();  // Carregar empresas após verificações
+        });
+        function fazerLogout() {
+            firebase.auth().signOut().then(() => {
+                // Redirecionar para página de login
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error('Erro ao fazer logout:', error);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const removeFile = document.getElementById('removeFile');
+            const parseResults = document.getElementById('parseResults');
+            const empresasCount = document.getElementById('empresasCount');
+            const empresasTableBody = document.getElementById('empresasTableBody');
+            const importBtn = document.getElementById('importBtn');
+            let empresasEncontradas = [];
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, (e) => {
+                    preventDefaults(e);
+                }, false);
+            });
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            dropArea.addEventListener('drop', handleDrop, false);
+            fileInput.addEventListener('change', handleFileSelect, false);
+            removeFile.addEventListener('click', resetFileInput, false);
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    handleFiles(files[0]);
+                }
+            }
+            function handleFileSelect(e) {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    handleFiles(files[0]);
+                }
+            }
+            function handleFiles(file) {
+                if (file.type !== 'text/plain') {
+                    alert('Por favor, selecione um arquivo .txt');
+                    return;
+                }
+                fileName.textContent = file.name;
+                fileInfo.style.display = 'block';
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const content = e.target.result;
+                    parseFileContent(content);
+                };
+                reader.readAsText(file);
+            }
+            function parseFileContent(content) {// Função melhorada para analisar o conteúdo do arquivo
+                const empresasEncontradas = [];
+                const lines = content.split('\n').filter(line => line.trim() !== '');
+                lines.forEach(line => {
+                    const cnpjRegex = /(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})/;
+                    const cnpjMatch = line.match(cnpjRegex);
+                    if (cnpjMatch) {
+                        const cnpj = cnpjMatch[1].replace(/[^\d]/g, '');  // Clean CNPJ
+                        let nome = line.replace(cnpjMatch[0], '').trim();
+                        if (nome) {
+                            empresasEncontradas.push({
+                                cnpj: cnpj,
+                                nome: nome
+                            });
+                        }
+                    }
+                });
+                return empresasEncontradas;
+            }
+            function importEmpresas() {
+                const batch = db.batch();
+                const empresaRef = db.collection('empresas').doc(cnpjLimpo);
+                batch.set(empresaRef, {
+                    cnpj: cnpjLimpo,
+                    cnpjFormatado: cnpj,
+                    nome: nome,
+                    dataCadastro: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });  // Usando merge: true para evitar duplicatas
+                batch.commit()
+                    .then(() => {
+                        alert(`Importação concluída! ${empresasEncontradas.length} empresas importadas.`);
+                        carregarEmpresas();
+                    })
+                    .catch((error) => {
+                        console.error('Erro ao importar empresas:', error);
+                    });
+            }
+            function insertEmpresasIntoDatabase(empresas) {// Esta função seria chamada após importar as empresas e confirmação do usuário
+                fetch('/api/save-empresas', { // Código para interagir com o SQLite através de sua API
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ empresas: empresas })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Empresas salvas no banco de dados:', data);
+                        alert(`${data.saved} empresas foram salvas com sucesso!`);  // Atualizar a interface ou mostrar mensagem de sucesso
+                        if (typeof carregarEmpresas === 'function') {
+                            carregarEmpresas();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao salvar empresas:', error);
+                        alert('Ocorreu um erro ao salvar as empresas no banco de dados.');
+                    });
+            }
+            function displayParseResults(empresas) {
+                empresasTableBody.innerHTML = '';
+                empresasCount.textContent = empresas.length;
+                empresas.forEach(empresa => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${empresa.cnpj}</td>
+                        <td>${empresa.nome}</td>
+                    `;
+                    empresasTableBody.appendChild(row);
+                });
+                parseResults.style.display = 'block';
+            }
+            function resetFileInput() {
+                fileInput.value = '';
+                fileInfo.style.display = 'none';
+                parseResults.style.display = 'none';
+                importBtn.disabled = true;
+            }
+            importBtn.addEventListener('click', importEmpresas);
+            function importEmpresas() {
+                if (empresasEncontradas.length === 0) {
+                    alert('Nenhuma empresa para importar.');
+                    return;
+                }
+                const batch = db.batch();
+                empresasEncontradas.forEach(empresa => {
+                    const empresaRef = db.collection('empresas').doc(empresa.cnpj);
+                    batch.set(empresaRef, {
+                        cnpj: empresa.cnpj,
+                        nome: empresa.nome,
+                        dataCadastro: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                });
+                batch.commit()
+                    .then(() => {
+                        alert(`Importação concluída! ${empresasEncontradas.length} empresas importadas.`);
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('importModal'));
+                        modal.hide();
+                        carregarEmpresas();
+                    })
+                    .catch((error) => {
+                        console.error('Erro ao importar empresas:', error);
+                        alert('Erro ao importar empresas. Verifique o console para detalhes.');
+                    });
+            }
+        });
+
+        document.getElementById('credenciaisModal').addEventListener('show.bs.modal', function () {
+            carregarCredenciais();
+        });
+        // ADICIONAR função para verificar se credenciais estão configuradas
+        function verificarCredenciaisConfiguradas() {
+            const user = firebase.auth().currentUser;
+            if (!user) return false;
+            return db.collection('usuarios').doc(user.uid).collection('credenciais').doc('automacao').get()
+                .then(doc => {
+                    if (!doc.exists) return false;
+                    const credenciais = doc.data();
+                    return !!(credenciais.prefeitura?.usuario &&
+                        credenciais.prefeitura?.senha &&
+                        credenciais.sefaz?.crc &&
+                        credenciais.sefaz?.senha);
+                })
+                .catch(() => false);
+        }
+        // ADICIONAR indicador visual de credenciais configuradas (opcional)
+        function atualizarIndicadorCredenciais() {
+            verificarCredenciaisConfiguradas().then(configuradas => {
+                const btnGeral = document.getElementById('btnGeral');
+                if (btnGeral) {
+                    if (configuradas) {
+                        btnGeral.classList.add('btn-success');
+                        btnGeral.classList.remove('btn-secondary');
+                        btnGeral.title = 'Credenciais configuradas ✅';
+                    } else {
+                        btnGeral.classList.add('btn-warning');
+                        btnGeral.classList.remove('btn-secondary');
+                        btnGeral.title = 'Configure suas credenciais ⚠️';
+                    }
+                }
+            });
+        }
+        // Função para exibir o alerta animado, similar ao de cadastro
+        function exibirAlerta(mensagem, tipo = "sucesso") {
+            const alerta = document.createElement("div");
+            alerta.className = "meu-alerta";
+            alerta.innerHTML = mensagem; // Usar innerHTML para permitir emojis
+
+            alerta.style.position = "fixed";
+            alerta.style.bottom = "20px";
+            alerta.style.right = "20px";
+            alerta.style.minWidth = "350px";
+            alerta.style.maxWidth = "500px";
+            alerta.style.padding = "16px 40px";
+            alerta.style.borderRadius = "8px";
+            alerta.style.zIndex = "9999";
+            alerta.style.opacity = "0";
+            alerta.style.transition = "opacity 0.5s ease-in-out";
+            alerta.style.fontFamily = "Arial, sans-serif";
+            alerta.style.fontSize = "14px";
+            alerta.style.lineHeight = "1.4";
+            alerta.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+
+            // Definir cor do alerta com base no tipo
+            if (tipo === 'sucesso') {
+                alerta.style.backgroundColor = "#28a745";
+                alerta.style.color = "#fff";
+                alerta.style.border = "1px solid #1e7e34";
+            } else if (tipo === 'erro') {
+                alerta.style.backgroundColor = "#dc3545";
+                alerta.style.color = "#fff";
+                alerta.style.border = "1px solid #bd2130";
+            } else if (tipo === 'info') {
+                alerta.style.backgroundColor = "#17a2b8";
+                alerta.style.color = "#fff";
+                alerta.style.border = "1px solid #117a8b";
+            }
+
+            document.body.appendChild(alerta);
+
+            // Animação de entrada
+            setTimeout(() => alerta.style.opacity = "1", 100);
+
+            // Remover alerta após 5 segundos
+            setTimeout(() => {
+                alerta.style.opacity = "0";
+                setTimeout(() => {
+                    if (alerta.parentNode) {
+                        alerta.remove();
+                    }
+                }, 500);
+            }, 5000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Firebase auth listener modificado
+            if (firebase && firebase.auth) {
+                firebase.auth().onAuthStateChanged(function (user) {
+                    if (!user) {
+                        window.location.href = 'index.html';
+                    } else {
+                        console.log('✅ Usuário autenticado:', user.email);
+                        // Carregar credenciais após autenticação
+                        setTimeout(() => {
+                            carregarCredenciais();
+                        }, 1000);
+                    }
+                });
+            }
+        });
+        function validarCPF(cpf) {
+            cpf = cpf.replace(/[^\d]/g, '');
+            if (cpf.length !== 11) return false;
+
+            // Verificar se todos os dígitos são iguais
+            if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+            // Validar primeiro dígito verificador
+            let soma = 0;
+            for (let i = 0; i < 9; i++) {
+                soma += parseInt(cpf.charAt(i)) * (10 - i);
+            }
+            let resto = soma % 11;
+            let digitoVerificador1 = resto < 2 ? 0 : 11 - resto;
+
+            if (parseInt(cpf.charAt(9)) !== digitoVerificador1) return false;
+
+            // Validar segundo dígito verificador
+            soma = 0;
+            for (let i = 0; i < 10; i++) {
+                soma += parseInt(cpf.charAt(i)) * (11 - i);
+            }
+            resto = soma % 11;
+            let digitoVerificador2 = resto < 2 ? 0 : 11 - resto;
+
+            return parseInt(cpf.charAt(10)) === digitoVerificador2;
+        }
+
+        function formatarCPF(cpf) {
+            if (!cpf || cpf.length !== 11) return cpf;
+            return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+
+        function normalizarDocumento(documento) {
+            return documento.replace(/[^\d]/g, '');
+        }
+
+        function identificarTipoDocumento(documento) {
+            const documentoLimpo = normalizarDocumento(documento);
+
+            if (documentoLimpo.length === 11) {
+                return validarCPF(documentoLimpo) ? 'CPF' : 'INVALIDO';
+            } else if (documentoLimpo.length === 14) {
+                return validarCNPJ(documentoLimpo) ? 'CNPJ' : 'INVALIDO';
+            }
+
+            return 'INVALIDO';
+        }
+
+        function formatarDocumento(documento) {
+            const documentoLimpo = normalizarDocumento(documento);
+            const tipo = identificarTipoDocumento(documento);
+
+            switch (tipo) {
+                case 'CPF':
+                    return formatarCPF(documentoLimpo);
+                case 'CNPJ':
+                    return formatarCNPJ(documentoLimpo);
+                default:
+                    return documento;
+            }
+        }
+
+        function validarCNPJ(cnpj) {
+            cnpj = cnpj.replace(/[^\d]/g, '');
+            if (cnpj.length !== 14) return false;
+            let soma = 0;
+            let peso = 2;
+            for (let i = 11; i >= 0; i--) {
+                soma += parseInt(cnpj.charAt(i)) * peso;
+                peso = peso === 9 ? 2 : peso + 1;
+            }
+            let resto = soma % 11;
+            let digitoVerificador1 = resto < 2 ? 0 : 11 - resto;
+            soma = 0;
+            peso = 2;
+            for (let i = 12; i >= 0; i--) {
+                soma += parseInt(cnpj.charAt(i)) * peso;
+                peso = peso === 9 ? 2 : peso + 1;
+            }
+            resto = soma % 11;
+            let digitoVerificador2 = resto < 2 ? 0 : 11 - resto;
+            return parseInt(cnpj.charAt(12)) === digitoVerificador1 &&
+                parseInt(cnpj.charAt(13)) === digitoVerificador2;
+        }
+        // Função para continuar cadastrando empresas
+        function continuarCadastro() {
+            // Apenas fecha o modal para continuar
+            const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+            confirmModal.hide();
+        }
+        // Função para finalizar cadastro
+        function finalizarCadastro() {
+            // Fecha o modal e pode redirecionar para outra página se necessário
+            const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+            confirmModal.hide();
+        }
+        // Adicionar event listeners para carregar empresas
+        document.addEventListener('DOMContentLoaded', function () {
+            // Carregar empresas do localStorage imediatamente
+            carregarEmpresasDoLocalStorage();
+            // Carregar empresas do Firestore após autenticação
+            firebase.auth().onAuthStateChanged(function (user) {
+                if (user) {
+                    carregarEmpresas();
+                }
+            });
+        });
+        // 6. CORREÇÃO NA FUNÇÃO importarArquivoTXT() - Incluir I.E se estiver no arquivo
+        function importarArquivoTXT(file) {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                alert('Faça login para importar empresas');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const content = e.target.result;
+                const linhas = content.split('\n');
+                const batch = db.batch();
+                const documentosUnicos = new Set();
+
+                const empresasDoUsuarioRef = db.collection('usuarios').doc(user.uid).collection('empresas');
+
+                linhas.forEach(linha => {
+                    // Formato: DOCUMENTO;NOME;IE (IE é opcional)
+                    const partes = linha.split(';').map(item => item.trim());
+                    const documento = partes[0];
+                    const nome = partes[1];
+                    const ie = partes[2] || '';
+
+                    if (documento && nome) {
+                        const tipoDocumento = identificarTipoDocumento(documento);
+
+                        if (tipoDocumento !== 'INVALIDO') {
+                            const documentoLimpo = normalizarDocumento(documento);
+                            const documentoFormatado = formatarDocumento(documento);
+
+                            if (!documentosUnicos.has(documentoLimpo)) {
+                                documentosUnicos.add(documentoLimpo);
+
+                                const empresaRef = empresasDoUsuarioRef.doc(documentoLimpo);
+                                const dadosEmpresa = {
+                                    documento: documentoLimpo,
+                                    documentoFormatado: documentoFormatado,
+                                    tipoDocumento: tipoDocumento,
+                                    nome: nome,
+                                    ie: ie,
+                                    dataCadastro: firebase.firestore.FieldValue.serverTimestamp(),
+                                    usuarioCadastro: user.uid
+                                };
+
+                                // Manter compatibilidade
+                                if (tipoDocumento === 'CNPJ') {
+                                    dadosEmpresa.cnpj = documentoLimpo;
+                                    dadosEmpresa.cnpjFormatado = documentoFormatado;
+                                } else if (tipoDocumento === 'CPF') {
+                                    dadosEmpresa.cpf = documentoLimpo;
+                                    dadosEmpresa.cpfFormatado = documentoFormatado;
+                                }
+
+                                batch.set(empresaRef, dadosEmpresa, { merge: true });
+                            }
+                        }
+                    }
+                });
+
+                batch.commit()
+                    .then(() => {
+                        alert(`Importação concluída! ${documentosUnicos.size} empresas/produtores importados.`);
+                        carregarEmpresas();
+                        carregarEmpresasTabela();
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('importModal'));
+                        if (modal) modal.hide();
+                    })
+                    .catch(error => {
+                        console.error('Erro na importação:', error);
+                        alert('Erro na importação. Verifique o console.');
+                    });
+            };
+
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        document.getElementById('dropArea').addEventListener('drop', function (e) {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'text/plain') {
+                importarArquivoTXT(files[0]);
+            }
+        });
+        document.getElementById('fileInput').addEventListener('change', function (e) {
+            const files = e.target.files;
+            if (files.length > 0 && files[0].type === 'text/plain') {
+                importarArquivoTXT(files[0]);
+            }
+        });
+        function testarConexaoServidor(mostrarAlerta = true) {
+            return new Promise((resolve) => {
+                fetch('http://localhost:3000/api/status')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('✅ Status do servidor:', data);
+                        if (mostrarAlerta) {
+                            exibirAlerta('🟢 Servidor conectado: ' + data.status, 'sucesso');
+                        }
+                        resolve(true);
+                    })
+                    .catch(error => {
+                        console.error('❌ Servidor não está respondendo:', error);
+                        if (mostrarAlerta) {
+                            exibirAlerta('🔴 Servidor offline! Inicie com "node server.js"', 'erro');
+                        }
+                        resolve(false);
+                    });
+            });
+        }
+        // Função para aguardar o servidor ficar disponível
+        async function aguardarServidor(maxTentativas = 10, intervalo = 2000) {
+            for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+                console.log(`⏳ Tentativa ${tentativa}/${maxTentativas} - Verificando servidor...`);
+
+                const serverOnline = await testarConexaoServidor(false);
+                if (serverOnline) {
+                    exibirAlerta('✅ Servidor conectado e pronto!', 'sucesso');
+                    return true;
+                }
+
+                if (tentativa < maxTentativas) {
+                    await new Promise(resolve => setTimeout(resolve, intervalo));
+                }
+            }
+
+            exibirAlerta('❌ Servidor não respondeu após várias tentativas', 'erro');
+            return false;
+        }
+
+        // Função executarAutomacao melhorada com verificação de servidor
+
+        function executarAutomacao(cnpj, nomeEmpresa, ie, cpf) {
+            const tipoAutomacao = obterTipoAutomacao();
+
+            if (!tipoAutomacao) {
+                exibirAlerta('Nenhuma automação disponível para esta seção.', 'info');
+                return;
+            }
+
+            // Lê a preferência de consulta do usuário do localStorage.
+            const preferencia = localStorage.getItem('configPreferenciaSefaz') || 'CNPJ';
+
+            // Seleciona o valor correto para a consulta com base na preferência.
+            let valorParaConsulta;
+            switch (preferencia) {
+                case 'IE':
+                    valorParaConsulta = ie;
+                    break;
+                case 'CPF':
+                    valorParaConsulta = cpf;
+                    break;
+                case 'CNPJ':
+                default:
+                    valorParaConsulta = cnpj;
+                    break;
+            }
+
+            // Valida se o valor para a consulta é válido.
+            if (!valorParaConsulta || valorParaConsulta.trim() === '' || valorParaConsulta.toLowerCase() === 'isento') {
+                exibirAlerta(`❌ A empresa não possui um ${preferencia} válido para a consulta.`, 'erro');
+                return;
+            }
+
+            console.log(`Executando automação: ${tipoAutomacao} para ${nomeEmpresa} com preferência em ${preferencia}`);
+            exibirAlerta(`🚀 Iniciando: ${tipoAutomacao} para ${nomeEmpresa}...`, 'info');
+
+            // Primeiro, verifica se o servidor está disponível.
+            testarConexaoServidor(false).then(serverOnline => {
+                if (!serverOnline) {
+                    exibirAlerta('🔴 Servidor não está rodando. Inicie o servidor e tente novamente.', 'erro');
+                    return Promise.reject('Servidor offline'); // Encerra a cadeia de promessas
+                }
+                // Se o servidor estiver online, busca as credenciais.
+                return buscarCredenciaisParaAutomacao();
+            })
+                .then(credenciais => {
+                    // Determina o endpoint correto.
+                    let endpoint;
+                    if (tipoAutomacao.startsWith('PREFEITURA')) {
+                        endpoint = 'http://localhost:3000/api/execute-automation-prefeitura';
+                    } else if (tipoAutomacao.startsWith('SEFAZ')) {
+                        endpoint = 'http://localhost:3000/api/execute-automation-sefaz';
+                    } else if (tipoAutomacao.startsWith('CERTIDAO')) {
+                        endpoint = 'http://localhost:3000/api/execute-automation-certidoes';
+                    } else {
+                        return Promise.reject(new Error('Tipo de automação não suportado!'));
+                    }
+
+                    // =============================================================================
+                    // CORREÇÃO PRINCIPAL APLICADA AQUI
+                    // O corpo do JSON agora envia 'valorConsulta' e 'nomeEmpresa',
+                    // exatamente como o backend espera.
+                    // =============================================================================
+                    return fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            valorConsulta: valorParaConsulta, // ENVIANDO O VALOR CORRETO
+                            nomeEmpresa: nomeEmpresa,         // ENVIANDO O NOME DA EMPRESA
+                            tipoAutomacao: tipoAutomacao,
+                            credenciais: credenciais
+                        })
+                    });
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.message || `Erro do Servidor: ${response.statusText}`) });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Resposta do servidor:', data);
+                    const tipoNotificacao = data.success ? 'sucesso' : 'erro';
+                    exibirAlerta(data.message, tipoNotificacao);
+                })
+                .catch(error => {
+                    // Não exibe o alerta de servidor desconectado se o erro já foi tratado.
+                    if (error !== 'Servidor offline') {
+                        console.error('Erro na automação:', error);
+                        exibirAlerta(`❌ Erro na automação: ${error.message}`, 'erro');
+                    }
+                });
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Aguardar 3 segundos para dar tempo do servidor iniciar
+            setTimeout(async () => {
+                console.log('🔄 Verificando disponibilidade do servidor...');
+                await aguardarServidor(5, 3000); // 5 tentativas, 3s de intervalo
+            }, 3000);
+
+            // Resto da inicialização...
+            if (firebase && firebase.auth) {
+                firebase.auth().onAuthStateChanged(function (user) {
+                    if (!user) {
+                        window.location.href = 'index.html';
+                    } else {
+                        console.log('✅ Usuário autenticado:', user.email);
+                    }
+                });
+            } else {
+                console.error('❌ Firebase Auth não está disponível');
+            }
+        });
+
+        // Função para ver sessões ativas
+        function verSessoesAtivas() {
+            fetch('http://localhost:3000/api/sessions')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('📊 Sessões ativas:', data);
+                    if (data.totalSessions === 0) {
+                        exibirAlerta('📋 Nenhuma sessão ativa no momento', 'info');
+                    } else {
+                        const sessoes = data.sessions.map(s => `• ${s.empresa} (${s.duration})`).join('\n');
+                        exibirAlerta(`📊 ${data.totalSessions} sessão(ões) ativa(s):\n${sessoes}`, 'info');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Erro ao buscar sessões:', error);
+                    exibirAlerta('❌ Erro ao buscar sessões ativas', 'erro');
+                });
+        }
+        // Testar conexão quando a página carregar
+        document.addEventListener('DOMContentLoaded', function () {
+            // Aguardar 2 segundos antes de testar a conexão
+            setTimeout(() => {
+                testarConexaoServidor();
+            }, 2000);
+            // Firebase auth listener
+            if (firebase && firebase.auth) {
+                firebase.auth().onAuthStateChanged(function (user) {
+                    if (!user) {
+                        window.location.href = 'index.html';
+                    } else {
+                        console.log('✅ Usuário autenticado:', user.email);
+                    }
+                });
+            } else {
+                console.error('❌ Firebase Auth não está disponível');
+            }
+        });
+        // Adicionar atalhos de teclado para desenvolvedores (opcional)
+        document.addEventListener('keydown', function (e) {
+            // Ctrl + Shift + T = Testar servidor
+            if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+                e.preventDefault();
+                testarConexaoServidor();
+            }
+            // Ctrl + Shift + S = Ver sessões
+            if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+                e.preventDefault();
+                verSessoesAtivas();
+            }
+        });
+        function togglePassword(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const eyeIcon = document.getElementById('eyeIcon-' + inputId);
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('bi-eye');
+                eyeIcon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('bi-eye-slash');
+                eyeIcon.classList.add('bi-eye');
+            }
+        }
+        function carregarEmpresasTabela() {
+            const user = firebase.auth().currentUser;
+            const tabelaBody = document.getElementById('tabelaEmpresasBody');
+            const totalEmpresas = document.getElementById('totalEmpresas');
+
+            if (!user) {
+                console.error('Usuário não autenticado');
+                if (tabelaBody) {
+                    tabelaBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">Faça login para visualizar as empresas</td></tr>';
+                }
+                return;
+            }
+
+            if (!tabelaBody) return;
+
+            // Mostrar loading
+            tabelaBody.innerHTML = `
+        <tr>
+            <td colspan="2" class="text-center text-muted">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                Carregando empresas...
+            </td>
+        </tr>
+    `;
+
+            const empresasDoUsuarioRef = db.collection('usuarios').doc(user.uid).collection('empresas');
+
+            empresasDoUsuarioRef
+                .get()
+                .then((snapshot) => {
+                    if (snapshot.empty) {
+                        tabelaBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">Nenhuma empresa cadastrada</td></tr>';
+                        if (totalEmpresas) totalEmpresas.textContent = '0';
+                        return;
+                    }
+
+                    const empresas = [];
+                    snapshot.forEach((doc) => {
+                        const empresa = doc.data();
+                        empresas.push(empresa);
+                    });
+
+                    // Ordenar por nome (padrão)
+                    empresas.sort((a, b) => a.nome.localeCompare(b.nome));
+
+                    renderizarTabelaEmpresas(empresas);
+
+                    if (totalEmpresas) {
+                        totalEmpresas.textContent = empresas.length;
+                    }
+
+                    // Adicionar event listener para ordenação
+                    const ordenacaoSelect = document.getElementById('ordenacaoSelect');
+                    if (ordenacaoSelect) {
+                        ordenacaoSelect.addEventListener('change', function () {
+                            ordenarEmpresasTabela(empresas, this.value);
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error("Erro ao carregar empresas:", error);
+                    tabelaBody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">Erro ao carregar empresas: ${error.message}</td></tr>`;
+                    if (totalEmpresas) totalEmpresas.textContent = '0';
+                });
+        }
+        // 3. CORREÇÃO NA FUNÇÃO renderizarTabelaEmpresas() - Incluir coluna I.E
+        function renderizarTabelaEmpresas(empresas) {
+            const tabelaBody = document.getElementById('tabelaEmpresasBody');
+            if (!tabelaBody) return;
+
+            if (empresas.length === 0) {
+                tabelaBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma empresa cadastrada</td></tr>';
+                return;
+            }
+
+            tabelaBody.innerHTML = '';
+
+            empresas.forEach((empresa) => {
+                const row = document.createElement('tr');
+
+                // Determinar qual documento mostrar
+                let documentoTexto = '';
+                if (empresa.tipoDocumento === 'CNPJ' || empresa.cnpj) {
+                    documentoTexto = empresa.documentoFormatado || empresa.cnpjFormatado || formatarCNPJ(empresa.cnpj || empresa.documento);
+                } else if (empresa.tipoDocumento === 'CPF' || empresa.cpf) {
+                    documentoTexto = empresa.documentoFormatado || empresa.cpfFormatado || formatarCPF(empresa.cpf || empresa.documento);
+                } else {
+                    // Fallback
+                    documentoTexto = empresa.cnpjFormatado || formatarCNPJ(empresa.cnpj);
+                }
+
+                row.innerHTML = `
+            <td>${empresa.nome}</td>
+            <td>${documentoTexto}</td>
+            <td>${empresa.ie || 'Não informado'}</td>
+            <td>
+                <button class="btn btn-outline-primary btn-sm" 
+                        onclick="editarEmpresa('${empresa.cnpj || empresa.documento}', '${empresa.nome}', '${empresa.ie || ''}')"
+                        title="Editar empresa">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+            </td>
+        `;
+                tabelaBody.appendChild(row);
+            });
+        }
+
+        // 4. CORREÇÃO NA FUNÇÃO editarEmpresa() - Incluir I.E no modal de edição
+        function editarEmpresa(cnpj, nome, ie = '') {
+            // Preencher o modal com os dados da empresa
+            document.getElementById('editEmpresaId').value = cnpj;
+            document.getElementById('editNome').value = nome;
+            document.getElementById('editCnpj').value = formatarCNPJ(cnpj);
+
+            // ADICIONAR CAMPO I.E NO MODAL (se não existir, criar)
+            let editIE = document.getElementById('editIE');
+            if (!editIE) {
+                // Criar o campo I.E no modal se não existir
+                const formEditarEmpresa = document.getElementById('formEditarEmpresa');
+                const ieDiv = document.createElement('div');
+                ieDiv.className = 'mb-3';
+                ieDiv.innerHTML = `
+            <label for="editIE" class="form-label">Inscrição Estadual (I.E)</label>
+            <input type="text" class="form-control" id="editIE">
+        `;
+                formEditarEmpresa.appendChild(ieDiv);
+                editIE = document.getElementById('editIE');
+            }
+            editIE.value = ie || '';
+
+            // Abrir o modal
+            const modal = new bootstrap.Modal(document.getElementById('editarEmpresaModal'));
+            modal.show();
+        }
+
+        // Adicione o evento para salvar as alterações
+        // 5. CORREÇÃO NO EVENT LISTENER para salvar alterações - Incluir I.E
+        document.getElementById('salvarEdicaoBtn').addEventListener('click', async function () {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                exibirAlerta('Faça login para editar empresas', 'erro');
+                return;
+            }
+
+            const cnpj = document.getElementById('editEmpresaId').value;
+            const novoNome = document.getElementById('editNome').value.trim();
+            const novaIE = document.getElementById('editIE') ? document.getElementById('editIE').value.trim() : '';
+
+            if (!novoNome) {
+                exibirAlerta('Nome da empresa é obrigatório', 'erro');
+                return;
+            }
+
+            try {
+                const empresaRef = db.collection('usuarios').doc(user.uid)
+                    .collection('empresas').doc(cnpj);
+
+                await empresaRef.update({
+                    nome: novoNome,
+                    ie: novaIE, // SALVANDO A I.E TAMBÉM
+                    dataAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                exibirAlerta('Empresa atualizada com sucesso!', 'sucesso');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editarEmpresaModal'));
+                modal.hide();
+
+                // Recarregar as listas
+                carregarEmpresas();
+                carregarEmpresasTabela();
+
+            } catch (error) {
+                console.error('Erro ao atualizar empresa:', error);
+                exibirAlerta('Erro ao atualizar empresa: ' + error.message, 'erro');
+            }
+        });
+        // 4. NOVA FUNÇÃO - Adicione esta função para ordenar a tabela:
+        function ordenarEmpresasTabela(empresas, criterio) {
+            let empresasOrdenadas = [...empresas];
+
+            switch (criterio) {
+                case 'nome-asc':
+                    empresasOrdenadas.sort((a, b) => a.nome.localeCompare(b.nome));
+                    break;
+                case 'nome-desc':
+                    empresasOrdenadas.sort((a, b) => b.nome.localeCompare(a.nome));
+                    break;
+                case 'cnpj-asc':
+                    empresasOrdenadas.sort((a, b) => a.cnpj.localeCompare(b.cnpj));
+                    break;
+                case 'cnpj-desc':
+                    empresasOrdenadas.sort((a, b) => b.cnpj.localeCompare(a.cnpj));
+                    break;
+            }
+
+            renderizarTabelaEmpresas(empresasOrdenadas);
+        }
+
+        // 5. NOVA FUNÇÃO - Adicione esta função para formatar CNPJ:
+        function formatarCNPJ(cnpj) {
+            if (!cnpj || cnpj.length !== 14) return cnpj;
+            return cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+        }
+
+        // 1. CORREÇÃO NA FUNÇÃO importEp() - Incluir I.E no cadastro
+        function importEp() {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                exibirAlerta('Faça login para cadastrar empresas', 'erro');
+                return;
+            }
+
+            try {
+                const documento = document.getElementById("cadCnpjCpf").value.trim();
+                const nome = document.getElementById("cadEmp").value.trim();
+                const ie = document.getElementById("cadIE").value.trim();
+
+                if (!documento || !nome) {
+                    throw new Error('Preencha os campos obrigatórios (CNPJ/CPF e Nome)');
+                }
+
+                const tipoDocumento = identificarTipoDocumento(documento);
+                if (tipoDocumento === 'INVALIDO') {
+                    throw new Error('CNPJ ou CPF inválido');
+                }
+
+                const documentoLimpo = normalizarDocumento(documento);
+                const documentoFormatado = formatarDocumento(documento);
+
+                // Referência para a subcoleção de empresas do usuário
+                const empresasDoUsuarioRef = db.collection('usuarios').doc(user.uid).collection('empresas');
+
+                const dadosEmpresa = {
+                    documento: documentoLimpo,
+                    documentoFormatado: documentoFormatado,
+                    tipoDocumento: tipoDocumento,
+                    nome: nome,
+                    ie: ie || '',
+                    dataCadastro: firebase.firestore.FieldValue.serverTimestamp(),
+                    usuarioCadastro: user.uid
+                };
+
+                // Manter compatibilidade com código existente
+                if (tipoDocumento === 'CNPJ') {
+                    dadosEmpresa.cnpj = documentoLimpo;
+                    dadosEmpresa.cnpjFormatado = documentoFormatado;
+                } else if (tipoDocumento === 'CPF') {
+                    dadosEmpresa.cpf = documentoLimpo;
+                    dadosEmpresa.cpfFormatado = documentoFormatado;
+                }
+
+                empresasDoUsuarioRef.doc(documentoLimpo).set(dadosEmpresa)
+                    .then(() => {
+                        exibirAlerta(`${tipoDocumento === 'CNPJ' ? 'Empresa' : 'Produtor rural'} cadastrado com sucesso!`, 'sucesso');
+                        carregarEmpresas();
+                        carregarEmpresasTabela();
+
+                        // Limpar campos do formulário
+                        document.getElementById("cadCnpjCpf").value = "";
+                        document.getElementById("cadEmp").value = "";
+                        document.getElementById("cadIE").value = "";
+                    })
+                    .catch((error) => {
+                        console.error('Erro ao cadastrar:', error);
+                        exibirAlerta(`Erro ao cadastrar: ${error.message}`, 'erro');
+                    });
+
+            } catch (error) {
+                console.error('Erro de validação:', error);
+                exibirAlerta(error.message, 'erro');
+            }
+        }
+
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.btn-acoes')) {
+                const empresaId = e.target.closest('.btn-acoes').dataset.empresaId;
+                const rect = e.target.getBoundingClientRect();
+
+                // Criar e posicionar o modal
+                let modalAcoes = document.getElementById('modalAcoes');
+                if (!modalAcoes) {
+                    modalAcoes = document.createElement('div');
+                    modalAcoes.id = 'modalAcoes';
+                    modalAcoes.className = 'modal-acoes';
+                    modalAcoes.innerHTML = `
+                <div class="modal-acoes-content">
+                    <button class="btn-acao" data-acao="editar" data-empresa-id="${empresaId}">
+                        <i class="fa-solid fa-edit me-2"></i>Editar
+                    </button>
+                </div>
+            `;
+                    document.body.appendChild(modalAcoes);
+                }
+
+                // Posicionar modal próximo ao ícone
+                modalAcoes.style.top = `${rect.bottom + window.scrollY}px`;
+                modalAcoes.style.left = `${rect.left - 80}px`;
+                modalAcoes.style.display = 'block';
+                modalAcoes.dataset.empresaId = empresaId;
+            }
+        });
+
+        // Fechar modal ao clicar fora
+        document.addEventListener('click', function (e) {
+            const modalAcoes = document.getElementById('modalAcoes');
+            if (modalAcoes && !e.target.closest('.btn-acoes') && !e.target.closest('.modal-acoes')) {
+                modalAcoes.style.display = 'none';
+            }
+        });
+
+        // Event listener para os ícones de ações
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.btn-acoes')) {
+                const empresaId = e.target.closest('.btn-acoes').dataset.empresaId;
+                const rect = e.target.getBoundingClientRect();
+
+                // Criar e posicionar o modal
+                let modalAcoes = document.getElementById('modalAcoes');
+                if (!modalAcoes) {
+                    modalAcoes = document.createElement('div');
+                    modalAcoes.id = 'modalAcoes';
+                    modalAcoes.className = 'modal-acoes';
+                    modalAcoes.innerHTML = `
+                <div class="modal-acoes-content">
+                    <button class="btn-acao" data-acao="editar" data-empresa-id="${empresaId}">
+                        <i class="fa-solid fa-edit me-2"></i>Editar
+                    </button>
+                </div>
+            `;
+                    document.body.appendChild(modalAcoes);
+                }
+
+                // Posicionar modal próximo ao ícone
+                modalAcoes.style.top = `${rect.bottom + window.scrollY}px`;
+                modalAcoes.style.left = `${rect.left - 80}px`;
+                modalAcoes.style.display = 'block';
+                modalAcoes.dataset.empresaId = empresaId;
+            }
+        });
+
+        // Fechar modal ao clicar fora
+        document.addEventListener('click', function (e) {
+            const modalAcoes = document.getElementById('modalAcoes');
+            if (modalAcoes && !e.target.closest('.btn-acoes') && !e.target.closest('.modal-acoes')) {
+                modalAcoes.style.display = 'none';
+            }
+        });
+
+        // 3. SUBSTITUA o seletor de pasta por esta versão melhorada:
+
+        function configurarSeletorPasta() {
+            const btnSelecionarPasta = document.getElementById('selecionarPasta');
+            const inputPastaDestino = document.getElementById('pastaDestino');
+
+            if (!btnSelecionarPasta || !inputPastaDestino) {
+                return false;
+            }
+
+            // Remover listeners anteriores
+            const novoBotao = btnSelecionarPasta.cloneNode(true);
+            btnSelecionarPasta.parentNode.replaceChild(novoBotao, btnSelecionarPasta);
+
+            novoBotao.addEventListener('click', async function (e) {
+                e.preventDefault();
+
+                try {
+                    if (window.electronAPI) {
+                        // Rodando no Electron - usar dialog nativo
+                        const result = await window.electronAPI.selecionarPasta();
+                        if (result.success && result.caminho) {
+                            inputPastaDestino.value = result.caminho;
+                            inputPastaDestino.dispatchEvent(new Event('input', { bubbles: true }));
+                            exibirAlerta('Pasta selecionada: ' + result.caminho, 'sucesso');
+                        }
+                    } else {
+                        // Rodando no navegador - usar seletor web
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.webkitdirectory = true;
+                        input.multiple = true;
+                        input.style.position = 'absolute';
+                        input.style.left = '-9999px';
+
+                        input.addEventListener('change', function (event) {
+                            if (event.target.files && event.target.files.length > 0) {
+                                const firstFile = event.target.files[0];
+                                const fullPath = firstFile.webkitRelativePath;
+                                const folderName = fullPath.split('/')[0];
+
+                                inputPastaDestino.value = './' + folderName;
+                                inputPastaDestino.dispatchEvent(new Event('input', { bubbles: true }));
+                                exibirAlerta('Pasta selecionada: ' + folderName, 'sucesso');
+                            }
+                            document.body.removeChild(input);
+                        });
+
+                        document.body.appendChild(input);
+                        input.click();
+                    }
+                } catch (error) {
+                    console.error('Erro ao selecionar pasta:', error);
+                    exibirAlerta('Erro ao selecionar pasta: ' + error.message, 'erro');
+                }
+            });
+
+            return true;
+        }
+        // Tentar configurar imediatamente e com delay
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(function () {
+                if (!configurarSeletorPasta()) {
+                    // Tentar novamente após 2 segundos
+                    setTimeout(configurarSeletorPasta, 2000);
+                }
+            }, 500);
+        });
+
+        // Backup: tentar quando o modal for aberto
+        document.addEventListener('click', function (e) {
+            if (e.target && e.target.id === 'btnBuscar') {
+                setTimeout(configurarSeletorPasta, 100);
+            }
+        });
+
+
+
+    </script>
+    <script src="auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="dashboard.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Quando a dashboard carrega → pede para checar updates
+        window.electron.ipcRenderer.invoke("check-for-updates");
+    });
+
+    // Quando uma atualização é encontrada
+    window.electron.ipcRenderer.on("update-available", (event, info) => {
+        Swal.fire({
+            title: "Atualização disponível",
+            text: `Versão ${info.version} encontrada. Deseja atualizar agora?`,
+            icon: "info",
+            showCancelButton: true,
+            confirmButtonText: "Sim, atualizar",
+            cancelButtonText: "Não"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.electron.ipcRenderer.invoke("install-update");
+            }
+        });
+    });
+
+    // Quando a atualização foi baixada
+    window.electron.ipcRenderer.on("update-downloaded", () => {
+        Swal.fire({
+            title: "Atualização pronta",
+            text: "O app será fechado e atualizado.",
+            icon: "success",
+            confirmButtonText: "Ok"
+        });
+    });
+
+    // Caso dê erro no update
+    window.electron.ipcRenderer.on("update-error", (event, message) => {
+        Swal.fire({
+            title: "Erro na atualização",
+            text: message,
+            icon: "error",
+            confirmButtonText: "Ok"
+        });
+    });
+</script>
+
+
+</body>
+
+</html>
